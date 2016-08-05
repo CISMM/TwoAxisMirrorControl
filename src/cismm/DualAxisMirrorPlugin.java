@@ -33,7 +33,8 @@ public class DualAxisMirrorPlugin implements org.micromanager.api.MMPlugin {
    
     List<String> daq_bin_list = Arrays.asList("two_ao_update.exe",
                                               "daq_trigger.exe",
-                                              "freerun.exe");
+                                              "freerun.exe",
+                                              "reset_daq.exe");
     
     public void create_daq_bins()
     {
