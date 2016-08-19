@@ -5,9 +5,13 @@ import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.plugin.filter.GaussianBlur;
 import ij.process.ImageProcessor;
+import java.awt.Color;
 import java.awt.HeadlessException;
 import java.awt.Point;
 import java.awt.Polygon;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.BufferedWriter;
@@ -27,7 +31,9 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 //import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
+import javax.swing.JSpinner;
 import static javax.swing.WindowConstants.HIDE_ON_CLOSE;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
@@ -50,13 +56,32 @@ import org.micromanager.utils.ReportingUtils;
 public class MirrorControlForm extends javax.swing.JFrame {
 
     public static class ExpMode implements Serializable {
-
+        
         public String mode_name = null;
         public String camera_name = null;
         public String daq_dev_str = null;
         double um_per_pix = 0;
         AffineTransform first_mapping = null;
+        
+        int center_x = -1;
+        int center_y = -1;
+        
         HashMap<Polygon, AffineTransform> poly_mapping = null;
+    }
+    
+    public static class TIRFCircle implements Serializable {
+        
+        List<String> volts = null;
+        int radius_um = 0;
+        int circle_frequency = 0;
+        int center_x = -1;
+        int center_y = -1;
+        
+        @Override
+        public String toString() {
+            return Integer.toString(radius_um) + "um, " +
+                   Integer.toString(circle_frequency) + "Hz";
+        }  
     }
     /**
      * Creates new form MirrorControlForm
@@ -76,43 +101,108 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private double v_range_x = max_v_x - min_v_x;
     private double v_range_y = max_v_y - min_v_y;
     private List<String> daq_bin_list_;
+    
     private Process daq_proc = null;
+    private ExpMode cur_mode = null;
+    
+    
+    Map<String, ExpMode> mode_map = new HashMap<String, ExpMode>();
+    
+    // tirf_loops contains TIRFCircle objects
+    // tirf_loops_model contains strings shown on GUI
+    // To update GUI, one needs to update tirf_loops_model from tirf_loops,
+    // and then display the updated tirf_loops_model string.
+    List<TIRFCircle> tirf_loops = new ArrayList<TIRFCircle>();
+    DefaultListModel tirf_loops_model = new DefaultListModel();
+    
+    BufferedWriter writer_to_daq = null;
+
+    
     // The order of the strings must match the order of the tabs on the GUI. 
     List<String> mode_str_array = Arrays.asList("TIRF",
             "PHOTOBLEACHING");
-    private ExpMode cur_mode = null;
-    //List<String> pin_array = Arrays.asList("Dev1/ao2,Dev1/ao3",
-    //                                       "Dev1/ao0,Dev1/ao1");
-    Map<String, ExpMode> mode_map = new HashMap<String, ExpMode>();
-    BufferedWriter writer_to_daq = null;
-
-//    AffineTransform first_mapping_ = null;
-//    Map<Polygon, AffineTransform> poly_mapping_ = null;
-    //   Map<String, Map<Polygon, AffineTransform> > mapping_map;
-    //   Map<String, AffineTransform> first_mapping_map;
+    
     private void fill_camera_list() {
         StrVector devices = core_.getLoadedDevicesOfType(DeviceType.CameraDevice);
         camera_name_ui.setModel(new DefaultComboBoxModel(devices.toArray()));
     }
 
-    private void fill_mode_map() {
-        loadAllModes();
-        /*
-         for (String s: mode_str_array) {
-         Mode m = new Mode();
-         m.mode_name = s;
-         mode_map.put(s, m);
-         }
-         */
+    private void mark_calibration_label(String calibration_name) {
+        if (calibration_name.equals(mode_str_array.get(0))) {
+                    tirf_calibration_sign.setText("FOUND");
+                    tirf_calibration_sign.setForeground(Color.green);
+                    tirf_calibration_sign.setBackground(Color.black);
+                    tirf_calibration_sign.setOpaque(true);
+                } else if (calibration_name.equals(mode_str_array.get(0))) {
+                    photobleaching_calibration_sign.setText("FOUND");
+                    photobleaching_calibration_sign.setForeground(Color.green);
+                    photobleaching_calibration_sign.setBackground(Color.black);
+                    photobleaching_calibration_sign.setOpaque(true);
+                } else {}
+    }
+    
+    private void fill_mode_map() {       
+        Preferences prefs = getCalibrationNode();
+        if (prefs == null) {
+            return;
+        }
 
-//        mode_map.put(mode_array.get(0), "Dev1/ao2,Dev1/ao3");
-//        mode_map.put(mode_array.get(1), "Dev1/ao0,Dev1/ao1");
+        //String nodeStr = prefs.toString();
+
+        for (String key : mode_str_array) {
+            ExpMode m = (ExpMode) JavaUtils.getObjectFromPrefs(prefs, key, new ExpMode());
+            mode_map.put(key, m);
+            
+            if (m.first_mapping != null) {
+                mark_calibration_label(m.mode_name);
+            }
+            
+            if (m.mode_name != null && m.mode_name.equals(mode_str_array.get(0))) {
+                original_center_x_ui.setText(Integer.toString(m.center_x));
+                original_center_y_ui.setText(Integer.toString(m.center_y));
+                center_input_x_ui.setValue(Integer.valueOf(m.center_x));
+                center_input_y_ui.setValue(Integer.valueOf(m.center_y));
+            }
+        }    
+    }
+    
+    private void update_tirf_model_ui() {
+        tirf_loops_ui.setModel(tirf_loops_model);
+    }
+    
+    private void load_tirf_strings() {
+        for (TIRFCircle t: tirf_loops) {
+            tirf_loops_model.addElement(t.toString());
+        }
+    }
+    private void load_tirf_loops_model_to_ui() {
+        load_tirf_strings();
+        update_tirf_model_ui();
     }
 
     public MirrorControlForm(CMMCore core, ScriptInterface app, List<String> daq_bin_list) {
         //public MirrorControlForm(List<String> daq_bain_list) {
         initComponents();
         light_mode_drop.setModel(new DefaultComboBoxModel(mode_str_array.toArray()));
+        ((JSpinner.DefaultEditor)input_volt_x_ui.getEditor()).getTextField().addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e){
+                if (e.getKeyCode() == KeyEvent.VK_ENTER){
+                    displaySpot((Double)input_volt_x_ui.getValue(), 
+                                (Double)input_volt_y_ui.getValue());
+                }
+            }
+        });
+        
+        ((JSpinner.DefaultEditor)input_volt_y_ui.getEditor()).getTextField().addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e){
+                if (e.getKeyCode() == KeyEvent.VK_ENTER){
+                    displaySpot((Double)input_volt_x_ui.getValue(), 
+                                (Double)input_volt_y_ui.getValue());
+                }
+            }
+        });
 
         this.setDefaultCloseOperation(HIDE_ON_CLOSE);
 
@@ -122,6 +212,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
         daq_bin_list_ = daq_bin_list;
         fill_mode_map();
         fill_camera_list();
+        load_tirf_loops_model_to_ui();
     }
 
     /**
@@ -133,6 +224,8 @@ public class MirrorControlForm extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
         tabbed_panel = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         jLabel17 = new javax.swing.JLabel();
@@ -147,13 +240,21 @@ public class MirrorControlForm extends javax.swing.JFrame {
         circle_frequency_ui = new javax.swing.JSpinner();
         freerun_button = new javax.swing.JButton();
         jLabel22 = new javax.swing.JLabel();
+        jLabel18 = new javax.swing.JLabel();
+        original_center_x_ui = new javax.swing.JLabel();
+        jLabel29 = new javax.swing.JLabel();
+        original_center_y_ui = new javax.swing.JLabel();
+        jLabel31 = new javax.swing.JLabel();
+        center_input_x_ui = new javax.swing.JSpinner();
+        jLabel32 = new javax.swing.JLabel();
+        center_input_y_ui = new javax.swing.JSpinner();
         jPanel5 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList();
+        tirf_loops_ui = new javax.swing.JList();
         jButton10 = new javax.swing.JButton();
         jButton11 = new javax.swing.JButton();
         jButton12 = new javax.swing.JButton();
-        jButton9 = new javax.swing.JButton();
+        add_circle_ui = new javax.swing.JButton();
         input_volt_x_ui = new javax.swing.JSpinner();
         input_volt_y_ui = new javax.swing.JSpinner();
         jButton8 = new javax.swing.JButton();
@@ -200,8 +301,21 @@ public class MirrorControlForm extends javax.swing.JFrame {
         dev_name_ui = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
         jLabel16 = new javax.swing.JLabel();
-        jLabel18 = new javax.swing.JLabel();
-        jLabel20 = new javax.swing.JLabel();
+        tirf_calibration_sign = new javax.swing.JLabel();
+        photobleaching_calibration_sign = new javax.swing.JLabel();
+
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane2.setViewportView(jTable1);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -225,11 +339,11 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
         jLabel21.setText("Circle Frequency:");
 
-        circle_radius_ui.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(4200), Integer.valueOf(0), null, Integer.valueOf(1)));
+        circle_radius_ui.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(2800), Integer.valueOf(0), null, Integer.valueOf(1)));
 
         circle_samples_ui.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(200), Integer.valueOf(0), null, Integer.valueOf(1)));
 
-        circle_frequency_ui.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(30), Integer.valueOf(1), null, Integer.valueOf(1)));
+        circle_frequency_ui.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(30.0d), Double.valueOf(0.1d), null, Double.valueOf(1.0d)));
 
         freerun_button.setText("Free Run");
         freerun_button.addActionListener(new java.awt.event.ActionListener() {
@@ -240,21 +354,28 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
         jLabel22.setText("Hz");
 
+        jLabel18.setText("Detected-1 Center:");
+
+        original_center_x_ui.setText("-1");
+
+        jLabel29.setText(",");
+
+        original_center_y_ui.setText("-1");
+
+        jLabel31.setText("CenterX:");
+
+        center_input_x_ui.setModel(new javax.swing.SpinnerNumberModel());
+
+        jLabel32.setText("CenterY:");
+
+        center_input_y_ui.setModel(new javax.swing.SpinnerNumberModel());
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel28)
-                            .addComponent(jLabel26))
-                        .addGap(22, 22, 22)
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(circle_samples_ui, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(circle_radius_ui, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 77, Short.MAX_VALUE))
-                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(jLabel21)
@@ -263,12 +384,51 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel22)
                         .addGap(18, 18, 18)
-                        .addComponent(freerun_button)))
+                        .addComponent(freerun_button))
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel4Layout.createSequentialGroup()
+                                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel28)
+                                    .addComponent(jLabel26)
+                                    .addComponent(jLabel18))
+                                .addGap(5, 5, 5)
+                                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(jPanel4Layout.createSequentialGroup()
+                                        .addComponent(original_center_x_ui)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(jLabel29, javax.swing.GroupLayout.PREFERRED_SIZE, 8, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(original_center_y_ui))
+                                    .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                        .addComponent(circle_samples_ui, javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(circle_radius_ui, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 77, Short.MAX_VALUE))))
+                            .addGroup(jPanel4Layout.createSequentialGroup()
+                                .addComponent(jLabel31)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(center_input_x_ui, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jLabel32)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(center_input_y_ui, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel18)
+                    .addComponent(original_center_x_ui)
+                    .addComponent(jLabel29)
+                    .addComponent(original_center_y_ui))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 14, Short.MAX_VALUE)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel31)
+                    .addComponent(center_input_x_ui, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel32)
+                    .addComponent(center_input_y_ui, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel26)
                     .addComponent(circle_radius_ui, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -288,14 +448,14 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder("Circle Loops"));
+        jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder("Circle Loops (radius in um)"));
 
-        jList1.setModel(new javax.swing.AbstractListModel() {
+        tirf_loops_ui.setModel(new javax.swing.AbstractListModel() {
             String[] strings = { "Item 1", "Item 2", "Item 3" };
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
         });
-        jScrollPane1.setViewportView(jList1);
+        jScrollPane1.setViewportView(tirf_loops_ui);
 
         jButton10.setText("Delete");
 
@@ -330,7 +490,12 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
-        jButton9.setText("Add Circle to Loop");
+        add_circle_ui.setText("Add Circle to Loop");
+        add_circle_ui.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                add_circle_uiActionPerformed(evt);
+            }
+        });
 
         input_volt_x_ui.setModel(new javax.swing.SpinnerNumberModel(0.0d, -10.0d, 10.0d, 0.01d));
 
@@ -346,9 +511,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton9))
+                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                                 .addGap(134, 134, 134)
@@ -365,30 +528,33 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(input_volt_y_ui, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jLabel24)))
+                        .addComponent(jLabel24))
+                    .addComponent(add_circle_ui))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton9)
-                    .addComponent(jButton8))
-                .addGap(27, 27, 27)
+                        .addContainerGap()
+                        .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton8)
+                        .addGap(37, 37, 37))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)))
+                .addComponent(add_circle_ui)
+                .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel19)
                     .addComponent(jLabel24)
                     .addComponent(jLabel17)
                     .addComponent(input_volt_x_ui, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(input_volt_y_ui, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(98, 98, 98))
+                .addGap(47, 47, 47))
         );
 
         tabbed_panel.addTab("TIRF", jPanel1);
@@ -550,7 +716,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addComponent(point_shoot_button)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
+                .addGap(0, 45, Short.MAX_VALUE)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(35, 35, 35))
         );
@@ -675,7 +841,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(calibration_button)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 20, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 74, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(reset_daq_ui)
                     .addComponent(jLabel27)
@@ -691,9 +857,11 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
         jLabel16.setText("Photobleaching Calibration:");
 
-        jLabel18.setText("None");
+        tirf_calibration_sign.setForeground(new java.awt.Color(255, 0, 0));
+        tirf_calibration_sign.setText("N/A");
 
-        jLabel20.setText("None");
+        photobleaching_calibration_sign.setForeground(java.awt.Color.red);
+        photobleaching_calibration_sign.setText("N/A");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -708,13 +876,13 @@ public class MirrorControlForm extends javax.swing.JFrame {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel16)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel20)
+                                .addComponent(photobleaching_calibration_sign)
                                 .addGap(0, 0, Short.MAX_VALUE)))
                         .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel18)
+                        .addComponent(tirf_calibration_sign)
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
@@ -723,14 +891,14 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
-                    .addComponent(jLabel18))
+                    .addComponent(tirf_calibration_sign))
                 .addGap(15, 15, 15)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel16)
-                    .addComponent(jLabel20))
+                    .addComponent(photobleaching_calibration_sign))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(tabbed_panel, javax.swing.GroupLayout.PREFERRED_SIZE, 237, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(tabbed_panel, javax.swing.GroupLayout.PREFERRED_SIZE, 291, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         pack();
@@ -832,9 +1000,13 @@ public class MirrorControlForm extends javax.swing.JFrame {
      * Illuminate a spot at position x,y.
      */
     private void displaySpot(double x, double y) {
+        if (cur_mode.daq_dev_str == null) {
+            JOptionPane.showMessageDialog(null, "Need to calibrate first");
+            return;
+        }
         if (x >= min_v_x && x <= (v_range_x + min_v_x)
-                && y >= min_v_y && y <= (v_range_y + min_v_y) &&
-                cur_mode.daq_dev_str != null) {
+                && y >= min_v_y && y <= (v_range_y + min_v_y))
+                 {
             //String pin_str = getPinStr(LightMode.TIRF);
             two_ao_update(cur_mode.daq_dev_str, Double.toString(x), Double.toString(y));
         }
@@ -1115,8 +1287,8 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private Preferences getCalibrationNode() {
         try {
             Preferences p = Preferences.userNodeForPackage(DualAxisMirrorPlugin.class)
-                    .node("calibration")
-                    .node("abc");
+                    .node("calibration");
+                    
             p.flush();
             return p;
         } catch (NullPointerException npe) {
@@ -1127,33 +1299,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
         return null;
     }
 
-    private void loadAllModes() {
-        Preferences prefs = getCalibrationNode();
-        if (prefs == null) {
-            return;
-        }
-
-        String nodeStr = prefs.toString();
-        System.out.print(nodeStr);
-
-        for (String key : mode_str_array) {
-            ExpMode m = (ExpMode) JavaUtils.getObjectFromPrefs(prefs, key, new ExpMode());
-            mode_map.put(key, m);
-        }
-
-        /*
-         String nodeStr = prefs.toString();
-        
-         if (mappingNode_ == null || !nodeStr.contentEquals(mappingNode_)) {
-         mappingNode_ = nodeStr;
-         mapping_ = (Map<Polygon, AffineTransform>) JavaUtils.getObjectFromPrefs(
-         prefs,
-         dev_.getName(),
-         new HashMap<Polygon, AffineTransform>());
-         }
-         return mapping_;
-         */
-    }
+    
 
     private void saveToDisk(ExpMode mode) {
         Preferences p = getCalibrationNode();
@@ -1175,7 +1321,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
             if (camera_name_ui.getItemCount() == 0) {
                 JOptionPane.showMessageDialog(null,
-                        "Camera is empty");
+                        "No camera found. Require a camera to detect signals.");
                 return;
             }
             if (x_axis_ui.getText().isEmpty()) {
@@ -1193,10 +1339,18 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         "Need to specify pixel size");
                 return;
             }
+            
+            // populate properties in cur_mode from GUI
             cur_mode.mode_name = light_mode_drop.getSelectedItem().toString();
             cur_mode.camera_name = camera_name_ui.getSelectedItem().toString();
             cur_mode.daq_dev_str = x_axis_ui.getText() + "," + y_axis_ui.getText();
-
+            cur_mode.um_per_pix  = (Double)um_per_pix_ui.getValue();
+            
+            Point2D.Double zero_v = new Point2D.Double(0, 0);
+            Point zero_p = measureSpotOnCamera(zero_v, false);
+            cur_mode.center_x = zero_p.x;
+            cur_mode.center_y = zero_p.y;
+            
             Thread th = new Thread("Projector calibration thread") {
                 @Override
                 public void run() {
@@ -1220,6 +1374,15 @@ public class MirrorControlForm extends javax.swing.JFrame {
                     } catch (RuntimeException e) {
                         ReportingUtils.showError(e);
                     } finally {
+                        if (stopRequested_.get() == false) {
+                            mark_calibration_label(cur_mode.mode_name);
+                            if (cur_mode.mode_name.equals(mode_str_array.get(0))) {
+                                original_center_x_ui.setText(Integer.toString(cur_mode.center_x));
+                                original_center_y_ui.setText(Integer.toString(cur_mode.center_y));
+                                center_input_x_ui.setValue(Integer.valueOf(cur_mode.center_x));
+                                center_input_y_ui.setValue(Integer.valueOf(cur_mode.center_y));
+                            }
+                        }
                         isRunning_.set(false);
                         stopRequested_.set(false);
                         calibration_button.setText("Calibrate Now!");
@@ -1346,10 +1509,15 @@ public class MirrorControlForm extends javax.swing.JFrame {
     }
     
     private List<Double> create_circle_dots(int center_x, int center_y) {
+        if (cur_mode == null) {
+            JOptionPane.showMessageDialog(null,
+                        "Calibrate a mirror first");
+            return null;
+        }
         List<Double> ret = new ArrayList<Double>();
 
         int num_dots = (Integer)circle_samples_ui.getValue();
-        double radius = (Double)circle_radius_ui.getValue() /
+        double radius = ((Integer)circle_radius_ui.getValue()).doubleValue() /
                      cur_mode.um_per_pix;
 
         double unit_angle = (360.0 / num_dots) * (Math.PI / 180.0);
@@ -1386,9 +1554,9 @@ public class MirrorControlForm extends javax.swing.JFrame {
         try {
             String app = System.getProperty("user.dir")
                     + File.separator + "mmplugins" + File.separator
-                    + "reset_daq.exe " + dev_str;
+                    + "reset_daq.exe";
 
-            ProcessBuilder pb = new ProcessBuilder(app);
+            ProcessBuilder pb = new ProcessBuilder(app, dev_str);
             daq_proc = pb.start();
             daq_proc.waitFor();
             daq_proc.destroy();
@@ -1405,10 +1573,14 @@ public class MirrorControlForm extends javax.swing.JFrame {
          return;
          */
         
-        Point2D.Double zero_v = new Point2D.Double(0, 0);
-        Point zero_p = measureSpotOnCamera(zero_v, false);
+        //Point2D.Double zero_v = new Point2D.Double(0, 0);
+        //Point zero_p = measureSpotOnCamera(zero_v, false);
         
-        final List<Double> combined = create_circle_dots(zero_p.x, zero_p.y);
+        //zero_v_x = zero_p.x;
+        //zero_v_y = zero_p.y;
+        
+        final List<Double> combined = create_circle_dots((Integer)center_input_x_ui.getValue(),
+                                                         (Integer)center_input_y_ui.getValue());
         /*
          final List<Double> combined = new ArrayList<Double>();
          combined.add(400.0);
@@ -1431,8 +1603,9 @@ public class MirrorControlForm extends javax.swing.JFrame {
             transformed_points.add(String.valueOf(trans_p.y));
         }
 
-        int sampling_rate = (Integer)circle_frequency_ui.getValue() * 
-                            (Integer)circle_samples_ui.getValue();
+        int sampling_rate = (int) ((Integer)circle_samples_ui.getValue() *
+                                   (Double)circle_frequency_ui.getValue());
+                            
         
         // example: run dev1/ao0,dev1/ao1 rate 6 x1 y1 x2 y2 x3 y3
         List<String> args = Arrays.asList(cur_mode.daq_dev_str,
@@ -1480,19 +1653,27 @@ public class MirrorControlForm extends javax.swing.JFrame {
         boolean running = isRunning_.get();
         if (running) {
             stopFreerun();
-            freerun_button.setText("Free Run Selected");
+            freerun_button.setText("Free Run");
         } else {
+            //final boolean liveModeRunning = app_.isLiveModeOn();
+            app_.enableLiveMode(false);
             startFreerun();
-            freerun_button.setText("Stop Free Run");
+            app_.enableLiveMode(true);
+            freerun_button.setText("Cancel");
         }
     }//GEN-LAST:event_freerun_buttonActionPerformed
 
+    private void reset_daq_signal(String dev, double x, double y) {
+        
+    }
+            
     private void reset_daq_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reset_daq_uiActionPerformed
 
         // Get the device name from current mode
         String dev_name = dev_name_ui.getText();
         reset_daq(dev_name);
         
+        /*
         // TODO Find a way to loop through all modes without hard-coded index
         Point2D.Double zero_v = new Point2D.Double(0, 0);
         //cur_mode = mode_map.get(mode_str_array.get(1));
@@ -1506,7 +1687,34 @@ public class MirrorControlForm extends javax.swing.JFrame {
         zero_v_y = p.y;
         
         app_.enableLiveMode(liveModeRunning);
+        */
     }//GEN-LAST:event_reset_daq_uiActionPerformed
+
+    private void add_circle_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_add_circle_uiActionPerformed
+        TIRFCircle tc = new TIRFCircle();
+        
+        List<Double> circle_px = create_circle_dots(zero_v_x, zero_v_y);
+      
+        if (circle_px == null)
+            return;
+        
+        List<String> transformed_points = new ArrayList<String>();
+        for (int i = 0; i < circle_px.size() - 1; i += 2) {
+            Point2D.Double p = new Point2D.Double(circle_px.get(i), circle_px.get(i + 1));
+            Point2D.Double trans_p = transformPoint(cur_mode.poly_mapping, p);
+
+            transformed_points.add(String.valueOf(trans_p.x));
+            transformed_points.add(String.valueOf(trans_p.y));
+        }
+        
+        tc.volts = transformed_points;
+        tc.radius_um = (Integer)circle_radius_ui.getValue();
+        tc.circle_frequency = (Integer)circle_frequency_ui.getValue();
+        
+        tirf_loops.add(tc);
+        tirf_loops_model.addElement(tc.toString());
+        update_tirf_model_ui();
+    }//GEN-LAST:event_add_circle_uiActionPerformed
     /**
      * @param args the command line arguments
      */
@@ -1542,8 +1750,11 @@ public class MirrorControlForm extends javax.swing.JFrame {
 //        });
 //    }                    
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton add_circle_ui;
     private javax.swing.JButton calibration_button;
     private javax.swing.JComboBox camera_name_ui;
+    private javax.swing.JSpinner center_input_x_ui;
+    private javax.swing.JSpinner center_input_y_ui;
     private javax.swing.JSpinner circle_frequency_ui;
     private javax.swing.JSpinner circle_radius_ui;
     private javax.swing.JSpinner circle_samples_ui;
@@ -1558,7 +1769,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton8;
-    private javax.swing.JButton jButton9;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -1571,7 +1781,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;
     private javax.swing.JLabel jLabel23;
@@ -1580,7 +1789,10 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel26;
     private javax.swing.JLabel jLabel27;
     private javax.swing.JLabel jLabel28;
+    private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel31;
+    private javax.swing.JLabel jLabel32;
     private javax.swing.JLabel jLabel33;
     private javax.swing.JLabel jLabel34;
     private javax.swing.JLabel jLabel35;
@@ -1590,7 +1802,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JList jList1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -1598,16 +1809,23 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSpinner jSpinner1;
     private javax.swing.JSpinner jSpinner2;
     private javax.swing.JSpinner jSpinner3;
+    private javax.swing.JTable jTable1;
     private javax.swing.JComboBox light_mode_drop;
+    private javax.swing.JLabel original_center_x_ui;
+    private javax.swing.JLabel original_center_y_ui;
+    private javax.swing.JLabel photobleaching_calibration_sign;
     private javax.swing.JButton point_shoot_button;
     private javax.swing.JTextField point_shoot_x;
     private javax.swing.JTextField point_shoot_y;
     private javax.swing.JButton reset_daq_ui;
     private javax.swing.JTabbedPane tabbed_panel;
+    private javax.swing.JLabel tirf_calibration_sign;
+    private javax.swing.JList tirf_loops_ui;
     private javax.swing.JSpinner um_per_pix_ui;
     private javax.swing.JTextField x_axis_ui;
     private javax.swing.JTextField y_axis_ui;
