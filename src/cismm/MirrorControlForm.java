@@ -252,7 +252,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
         add_circle_ui = new javax.swing.JButton();
         input_volt_x_ui = new javax.swing.JSpinner();
         input_volt_y_ui = new javax.swing.JSpinner();
-        jButton8 = new javax.swing.JButton();
+        submit_circles_ui = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         point_shoot_button = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
@@ -496,7 +496,12 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
         input_volt_y_ui.setModel(new javax.swing.SpinnerNumberModel(0.0d, -10.0d, 10.0d, 0.01d));
 
-        jButton8.setText("Submit Loops");
+        submit_circles_ui.setText("Submit Circles");
+        submit_circles_ui.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                submit_circles_uiActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -507,13 +512,10 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                .addGap(134, 134, 134)
-                                .addComponent(jButton8))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(submit_circles_ui)))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel17)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -534,9 +536,9 @@ public class MirrorControlForm extends javax.swing.JFrame {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton8)
-                        .addGap(37, 37, 37))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(submit_circles_ui)
+                        .addGap(32, 32, 32))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -997,7 +999,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
      */
     private void displaySpot(double x, double y) {
         if (cur_mode.daq_dev_str == null) {
-            JOptionPane.showMessageDialog(null, "Need to calibrate first");
+            JOptionPane.showMessageDialog(null, "Need to cJOptionalibrate first");
             return;
         }
         if (x >= min_v_x && x <= (v_range_x + min_v_x)
@@ -1295,7 +1297,27 @@ public class MirrorControlForm extends javax.swing.JFrame {
         return null;
     }
 
-    
+    private void run_external_program(String prog_name, List<String> args, boolean will_done) {
+        try {
+            String app = System.getProperty("user.dir")
+                    + File.separator + "mmplugins" + File.separator
+                    + prog_name;
+
+            args.add(0, app);
+
+            ProcessBuilder pb = new ProcessBuilder(args);
+            daq_proc = pb.start();
+            
+            if (will_done) {
+                daq_proc.waitFor();
+                daq_proc.destroy();
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
     private void saveToDisk(ExpMode mode) {
         Preferences p = getCalibrationNode();
@@ -1716,6 +1738,77 @@ public class MirrorControlForm extends javax.swing.JFrame {
         tirf_loops_model.addElement(tc.toString());
         update_tirf_model_ui();
     }//GEN-LAST:event_add_circle_uiActionPerformed
+
+    private void stop_submit_circles() {
+        daq_proc.destroy();
+        isRunning_.set(false);
+    }
+    
+    private void submit_circles() {
+        // prepare arguments before calling an external program
+        final List<String> args = new ArrayList<String>();
+        
+        args.add(cur_mode.daq_dev_str);
+        args.add("/Dev1/PFI0");
+        args.add("2");
+        args.add(Double.toString(tirf_loops.get(0).circle_frequency * 
+                 tirf_loops.get(0).volts.size()/2));
+        args.add(Integer.toString(tirf_loops.size()));
+        args.add(Integer.toString(tirf_loops.size()/2));
+        
+        for (TIRFCircle tc: tirf_loops) {
+            args.addAll(tc.volts);
+        }
+        
+        final boolean liveModeRunning = app_.isLiveModeOn();
+        if (!isRunning_.get()) {
+            stopRequested_.set(false);
+            Thread th = new Thread("Projector calibration thread") {
+                @Override
+                public void run() {
+                    try {
+                        isRunning_.set(true);
+                        run_external_program("ao_patterns_triggered.exe",
+                                             args, false);
+
+                        app_.enableLiveMode(liveModeRunning);
+                    } catch (HeadlessException e) {
+                        ReportingUtils.showError(e);
+                    } catch (RuntimeException e) {
+                        ReportingUtils.showError(e);
+                    } finally {
+                        //isRunning_.set(false);
+                        //stopRequested_.set(false);
+                        //calibration_button.setText("Calibrate");     
+                    }
+                }
+            };
+            th.start();
+        }
+    }
+    private void submit_circles_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_submit_circles_uiActionPerformed
+        /*
+        if (!checkCalibration())
+            return;
+        */
+        
+        boolean running = isRunning_.get();
+        if (running) {
+            stop_submit_circles();
+            submit_circles_ui.setText("Submit Circles");
+        } else {
+            //app_.enableLiveMode(false);
+            if (tirf_loops.size() <= 0) {
+                JOptionPane.showMessageDialog(null, "No circles in loop");
+                return;
+            }
+            submit_circles();
+            //app_.enableLiveMode(true);
+            submit_circles_ui.setText("Cancel");
+        }
+        
+        
+    }//GEN-LAST:event_submit_circles_uiActionPerformed
     /**
      * @param args the command line arguments
      */
@@ -1769,7 +1862,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
-    private javax.swing.JButton jButton8;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -1824,6 +1916,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private javax.swing.JTextField point_shoot_x;
     private javax.swing.JTextField point_shoot_y;
     private javax.swing.JButton reset_daq_ui;
+    private javax.swing.JButton submit_circles_ui;
     private javax.swing.JTabbedPane tabbed_panel;
     private javax.swing.JLabel tirf_calibration_sign;
     private javax.swing.JList tirf_loops_ui;
