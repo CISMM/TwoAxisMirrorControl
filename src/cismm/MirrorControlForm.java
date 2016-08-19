@@ -70,14 +70,14 @@ public class MirrorControlForm extends javax.swing.JFrame {
         
         List<String> volts = null;
         int radius_um = 0;
-        int circle_frequency = 0;
+        double circle_frequency = 0;
         int center_x = -1;
         int center_y = -1;
         
         @Override
         public String toString() {
             return Integer.toString(radius_um) + "um, " +
-                   Integer.toString(circle_frequency) + "Hz";
+                   Double.toString(circle_frequency) + "Hz";
         }  
     }
     /**
@@ -91,9 +91,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private double max_v_x = 10;
     private double min_v_y = -10;
     private double max_v_y = 10;
-    
-    private int zero_v_x;
-    private int zero_v_y;
     
     private double v_range_x = max_v_x - min_v_x;
     private double v_range_y = max_v_y - min_v_y;
@@ -210,6 +207,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
         fill_mode_map();
         fill_camera_list();
         load_tirf_loops_model_to_ui();
+        update_cur_mode_based_on_tab();
     }
 
     /**
@@ -351,7 +349,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
         jLabel22.setText("Hz");
 
-        jLabel18.setText("Detected-1 Center:");
+        jLabel18.setText("Detected Center:");
 
         original_center_x_ui.setText("-1");
 
@@ -601,9 +599,9 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
         jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        point_shoot_x.setText("jTextField2");
+        point_shoot_x.setText("0");
 
-        point_shoot_y.setText("jTextField3");
+        point_shoot_y.setText("0");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -612,34 +610,35 @@ public class MirrorControlForm extends javax.swing.JFrame {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel3Layout.createSequentialGroup()
-                            .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(point_shoot_button)
-                                .addGroup(jPanel3Layout.createSequentialGroup()
-                                    .addComponent(jLabel1)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(jLabel7))
-                                .addComponent(jLabel2)
-                                .addGroup(jPanel3Layout.createSequentialGroup()
-                                    .addComponent(jLabel9)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(jLabel3)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(jLabel10)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(jLabel5)))
-                            .addGap(53, 53, 53))
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                            .addComponent(jLabel6)
-                            .addGap(18, 18, 18)))
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(point_shoot_x, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(point_shoot_y, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(point_shoot_button)
+                            .addComponent(jLabel2)
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addComponent(jLabel9)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel3)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jLabel10)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel5))
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(jPanel3Layout.createSequentialGroup()
+                                        .addComponent(point_shoot_x)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(point_shoot_y, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18))
+                                    .addGroup(jPanel3Layout.createSequentialGroup()
+                                        .addComponent(jLabel1)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                .addComponent(jLabel7)))
+                        .addGap(53, 53, 53))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                        .addComponent(jLabel6)
+                        .addGap(18, 18, 18)))
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(2, 2, 2)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -869,7 +868,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(tabbed_panel)
+                            .addComponent(tabbed_panel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel16)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1487,11 +1486,14 @@ public class MirrorControlForm extends javax.swing.JFrame {
         displaySpot(volts.x, volts.y);
     }//GEN-LAST:event_point_shoot_buttonActionPerformed
 
-    private void tabbed_panelStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabbed_panelStateChanged
+    private void update_cur_mode_based_on_tab() {
         int tab_ind = tabbed_panel.getSelectedIndex();
         if (tab_ind < 2) {
             cur_mode = mode_map.get(mode_str_array.get(tab_ind));
         }
+    }
+    private void tabbed_panelStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabbed_panelStateChanged
+        update_cur_mode_based_on_tab();
 //        mapping_ = mapping_map.get(cur_mode);
         //first_mapping_ = first_mapping_map.get(tabbed_panel.getSelectedIndex());
         //mapping_ = mapping_map.get(tabbed_panel.getSelectedIndex());
@@ -1508,7 +1510,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private List<Double> create_circle_dots(int center_x, int center_y) {
         if (cur_mode == null) {
             JOptionPane.showMessageDialog(null,
-                        "Calibrate a mirror first");
+                        "No calibration found during creating circles.");
             return null;
         }
         List<Double> ret = new ArrayList<Double>();
@@ -1689,7 +1691,8 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private void add_circle_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_add_circle_uiActionPerformed
         TIRFCircle tc = new TIRFCircle();
         
-        List<Double> circle_px = create_circle_dots(zero_v_x, zero_v_y);
+        List<Double> circle_px = create_circle_dots((Integer)center_input_x_ui.getValue(),
+                                                    (Integer)center_input_y_ui.getValue());
       
         if (circle_px == null)
             return;
@@ -1705,7 +1708,9 @@ public class MirrorControlForm extends javax.swing.JFrame {
         
         tc.volts = transformed_points;
         tc.radius_um = (Integer)circle_radius_ui.getValue();
-        tc.circle_frequency = (Integer)circle_frequency_ui.getValue();
+        tc.circle_frequency = (Double)circle_frequency_ui.getValue();
+        tc.center_x = (Integer)center_input_x_ui.getValue();
+        tc.center_y = (Integer)center_input_y_ui.getValue();
         
         tirf_loops.add(tc);
         tirf_loops_model.addElement(tc.toString());
