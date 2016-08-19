@@ -2,8 +2,6 @@ package cismm;
 
 import ij.IJ;
 import ij.gui.PointRoi;
-import ij.gui.Roi;
-import ij.plugin.filter.GaussianBlur;
 import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.HeadlessException;
@@ -11,7 +9,6 @@ import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.BufferedWriter;
@@ -1655,10 +1652,9 @@ public class MirrorControlForm extends javax.swing.JFrame {
             stopFreerun();
             freerun_button.setText("Free Run");
         } else {
-            //final boolean liveModeRunning = app_.isLiveModeOn();
-            app_.enableLiveMode(false);
+            //app_.enableLiveMode(false);
             startFreerun();
-            app_.enableLiveMode(true);
+            //app_.enableLiveMode(true);
             freerun_button.setText("Cancel");
         }
     }//GEN-LAST:event_freerun_buttonActionPerformed
