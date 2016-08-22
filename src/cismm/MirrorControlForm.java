@@ -1724,8 +1724,13 @@ public class MirrorControlForm extends javax.swing.JFrame {
             Point2D.Double p = new Point2D.Double(circle_px.get(i), circle_px.get(i + 1));
             Point2D.Double trans_p = transformPoint(cur_mode.poly_mapping, p);
 
+
             transformed_points.add(String.valueOf(trans_p.x));
             transformed_points.add(String.valueOf(trans_p.y));
+            
+            //String x = String.format("%.1f", (Double)trans_p.x);
+            //String y = String.format("%.1f", (Double)trans_p.y);
+            
         }
         
         tc.volts = transformed_points;
@@ -1751,14 +1756,18 @@ public class MirrorControlForm extends javax.swing.JFrame {
         args.add(cur_mode.daq_dev_str);
         args.add("/Dev1/PFI0");
         args.add("2");
-        args.add(Double.toString(tirf_loops.get(0).circle_frequency * 
-                 tirf_loops.get(0).volts.size()/2));
+        Double sampling_rate = tirf_loops.get(0).circle_frequency * 
+                               tirf_loops.get(0).volts.size()/2;
+        
+        args.add(Integer.toString(sampling_rate.intValue()));
         args.add(Integer.toString(tirf_loops.size()));
-        args.add(Integer.toString(tirf_loops.size()/2));
+        args.add(Integer.toString(tirf_loops.get(0).volts.size()/2));
         
         for (TIRFCircle tc: tirf_loops) {
             args.addAll(tc.volts);
         }
+        
+        JOptionPane.showMessageDialog(null, args);
         
         final boolean liveModeRunning = app_.isLiveModeOn();
         if (!isRunning_.get()) {
@@ -1776,8 +1785,8 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         ReportingUtils.showError(e);
                     } catch (RuntimeException e) {
                         ReportingUtils.showError(e);
-                    } finally {
-                        //isRunning_.set(false);
+                    } finally { 
+                       //isRunning_.set(false);
                         //stopRequested_.set(false);
                         //calibration_button.setText("Calibrate");     
                     }
