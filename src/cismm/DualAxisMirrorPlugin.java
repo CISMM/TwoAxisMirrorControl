@@ -89,6 +89,7 @@ public class DualAxisMirrorPlugin implements org.micromanager.api.MMPlugin {
     @Override
     public void dispose() {
         if (frame_ != null) {
+            frame_.cleanup();
             frame_.setVisible(false);
             frame_.dispose();
             frame_ = null;
