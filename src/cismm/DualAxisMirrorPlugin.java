@@ -1,6 +1,11 @@
 package cismm;
 
 
+import ij.IJ;
+import ij.plugin.frame.RoiManager;
+import java.awt.Checkbox;
+import java.awt.Panel;
+import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,6 +17,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.utils.GUIUtils;
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
@@ -81,6 +87,20 @@ public class DualAxisMirrorPlugin implements org.micromanager.api.MMPlugin {
         }     
     }
     
+    // Show the ImageJ Roi Manager and return a reference to it.   
+   public static RoiManager showRoiManager() {
+      IJ.run("ROI Manager...");
+      final RoiManager roiManager = RoiManager.getInstance();
+      GUIUtils.recallPosition(roiManager);
+      // "Get the "Show All" checkbox and make sure it is checked.
+      Checkbox checkbox = (Checkbox) ((Panel) roiManager.getComponent(1)).getComponent(9);
+      checkbox.setState(true);
+      // Simulated click of the "Show All" checkbox to force ImageJ
+      // to show all of the ROIs.
+      roiManager.itemStateChanged(new ItemEvent(checkbox, 0, null, ItemEvent.SELECTED));
+      return roiManager;
+   }
+   
     /*
     public DualAxisMirrorPlugin() {
         create_daq_bins();

@@ -1,8 +1,14 @@
 package cismm;
 
 import ij.IJ;
+import ij.ImagePlus;
 import ij.gui.PointRoi;
+import ij.gui.Roi;
+import ij.io.FileSaver;
+import ij.plugin.filter.GaussianBlur;
+import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 import java.awt.Color;
 import java.awt.HeadlessException;
 import java.awt.Point;
@@ -114,7 +120,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
     
     // The order of the strings must match the order of the tabs on the GUI. 
     List<String> mode_str_array = Arrays.asList("TIRF",
-            "PHOTOBLEACHING");
+            "PHOTOACTIVATION");
     
     public void cleanup() {
         if (daq_proc != null) {
@@ -129,6 +135,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private void fill_camera_list() {
         StrVector devices = core_.getLoadedDevicesOfType(DeviceType.CameraDevice);
         camera_name_ui.setModel(new DefaultComboBoxModel(devices.toArray()));
+        camera_name_ui1.setModel(new DefaultComboBoxModel(devices.toArray()));
     }
 
     private void mark_calibration_label(String calibration_name) {
@@ -263,6 +270,8 @@ public class MirrorControlForm extends javax.swing.JFrame {
         input_volt_x_ui = new javax.swing.JSpinner();
         input_volt_y_ui = new javax.swing.JSpinner();
         submit_circles_ui = new javax.swing.JButton();
+        save_circle_maps_ui = new javax.swing.JButton();
+        camera_name_ui1 = new javax.swing.JComboBox();
         jPanel3 = new javax.swing.JPanel();
         point_shoot_button = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
@@ -272,7 +281,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         jSpinner1 = new javax.swing.JSpinner();
         jLabel7 = new javax.swing.JLabel();
-        jButton2 = new javax.swing.JButton();
+        roi_manager_ui = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
@@ -512,6 +521,13 @@ public class MirrorControlForm extends javax.swing.JFrame {
             }
         });
 
+        save_circle_maps_ui.setText("Save circle maps");
+        save_circle_maps_ui.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                save_circle_maps_uiActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -519,12 +535,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(submit_circles_ui)))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel17)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -535,8 +545,20 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addComponent(input_volt_y_ui, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jLabel24))
-                    .addComponent(add_circle_ui))
-                .addContainerGap(19, Short.MAX_VALUE))
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                            .addComponent(add_circle_ui)
+                            .addGap(152, 152, 152)
+                            .addComponent(camera_name_ui1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(save_circle_maps_ui))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                            .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGap(9, 9, 9)
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(submit_circles_ui)))))
+                .addContainerGap(16, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -552,7 +574,10 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)))
-                .addComponent(add_circle_ui)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(add_circle_ui)
+                    .addComponent(save_circle_maps_ui)
+                    .addComponent(camera_name_ui1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel19)
@@ -584,7 +609,12 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
         jLabel7.setText("ms");
 
-        jButton2.setText("ROI Manager >>");
+        roi_manager_ui.setText("ROI Manager >>");
+        roi_manager_ui.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                roi_manager_uiActionPerformed(evt);
+            }
+        });
 
         jButton3.setText("Set ROIs");
 
@@ -663,7 +693,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jButton3)
-                            .addComponent(jButton2)
+                            .addComponent(roi_manager_ui)
                             .addComponent(jLabel8))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(jPanel3Layout.createSequentialGroup()
@@ -682,7 +712,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(jButton2)
+                        .addComponent(roi_manager_ui)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jButton3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -728,7 +758,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 .addGap(35, 35, 35))
         );
 
-        tabbed_panel.addTab("Photobleaching", jPanel3);
+        tabbed_panel.addTab("FRAP", jPanel3);
 
         jPanel7.setBorder(javax.swing.BorderFactory.createTitledBorder("Setup"));
 
@@ -744,7 +774,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
         jLabel23.setText("Pixel Size:");
 
-        um_per_pix_ui.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(5.2d), Double.valueOf(0.0d), null, Double.valueOf(0.1d)));
+        um_per_pix_ui.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(5.5d), Double.valueOf(0.0d), null, Double.valueOf(0.1d)));
 
         jLabel25.setText("um");
 
@@ -862,7 +892,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
         jLabel4.setText("TIRF Calibration:");
 
-        jLabel16.setText("Photobleaching Calibration:");
+        jLabel16.setText("FRAP Calibration:");
 
         tirf_calibration_sign.setForeground(new java.awt.Color(255, 0, 0));
         tirf_calibration_sign.setText("N/A");
@@ -879,7 +909,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(tabbed_panel, javax.swing.GroupLayout.DEFAULT_SIZE, 522, Short.MAX_VALUE)
+                            .addComponent(tabbed_panel)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel16)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1008,7 +1038,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
      */
     private void displaySpot(double x, double y) {
         if (cur_mode.daq_dev_str == null) {
-            JOptionPane.showMessageDialog(null, "Need to cJOptionalibrate first");
+            JOptionPane.showMessageDialog(null, "Need to calibrate first");
             return;
         }
         if (x >= min_v_x && x <= (v_range_x + min_v_x)
@@ -1029,13 +1059,14 @@ public class MirrorControlForm extends javax.swing.JFrame {
         //JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "min:" + String.valueOf(min_max[0])
         //        + " max:" + String.valueOf(min_max[1]));
 
-        if ((int) min_max[1] / (int) min_max[0] < 5) {
+        if ((int) min_max[1] / (int) min_max[0] < 5000) {
             return new Point(-2, -2);
         }
 
         int width = proc.getWidth();
         int imax = ImageUtils.findArrayMax(proc.getPixels());
 
+        
         int y = imax / width;
         int x = imax % width;
         return new Point(x, y);
@@ -1046,11 +1077,11 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private static Point findPeak(ImageProcessor proc) {
         ImageProcessor blurImage = proc.duplicate();
         
-        /*
+        
         blurImage.setRoi((Roi) null);
         GaussianBlur blur = new GaussianBlur();
-        blur.blurGaussian(blurImage, 3, 3, 0.01);
-        */
+        blur.blurGaussian(blurImage, 5, 5, 0.01);
+        
         //showProcessor("findPeak",proc);
         //Point x = ImageUtils.findMaxPixel(blurImage);
         Point x = findMaxPixel(blurImage);
@@ -1233,7 +1264,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
         Point2D.Double slmPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
         Point2D.Double camPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
 
-        final int padding = 10;
+        final int padding = 25;
         final int cam_width = (int) core_.getImageWidth() - padding * 2;
         final int cam_height = (int) core_.getImageHeight() - padding * 2;
         final double cam_step_x = cam_width / nGrid;
@@ -1825,6 +1856,89 @@ public class MirrorControlForm extends javax.swing.JFrame {
         
         
     }//GEN-LAST:event_submit_circles_uiActionPerformed
+
+    private void save_circle_maps_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_save_circle_maps_uiActionPerformed
+        // TODO add your handling code here:
+        
+        
+        Thread th = new Thread("Projector calibration thread") {
+            @Override
+            public void run() {
+                final boolean liveModeRunning = app_.isLiveModeOn();
+                app_.enableLiveMode(false);
+                
+                String old_cam = core_.getCameraDevice();
+                try {
+                    core_.setCameraDevice(camera_name_ui1.getSelectedItem().toString());
+                } catch (Exception ex) {
+                    Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                
+                final List<String> all_volts = new ArrayList<String>();
+                for (TIRFCircle tc : tirf_loops) {
+                    all_volts.addAll(tc.volts);
+                }
+                
+                short max_image[] = null;
+                
+                try {
+                    core_.snapImage();
+                    TaggedImage timg = core_.getTaggedImage();
+                    max_image = (short[]) timg.pix;                
+                } catch (Exception ex) {
+                    Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                // Compare to max_image and save the maximum value for each pixel
+                String prefix = "tirf_map_";
+                for (int i = 0, cnt = 0; i < all_volts.size(); i += 2, cnt++) {
+                //for (int i = 0; i < 5; i ++) {
+                
+                    displaySpot(Double.valueOf(all_volts.get(i)), Double.valueOf(all_volts.get(i + 1)));
+                    try {
+                        core_.snapImage();
+                        TaggedImage timg = core_.getTaggedImage();
+                        app_.displayImage(timg);
+                        
+                        //short image[] = (short[]) core_.getImage();
+                        short image[] = (short[]) timg.pix;
+                        
+                        ImageProcessor ip = ImageUtils.makeProcessor(core_, image);
+                        ImagePlus imgp = new ImagePlus("", ip);
+                        FileSaver fs = new FileSaver(imgp);
+                        fs.saveAsTiff(".\\"+prefix+String.format("%04d", cnt)+".tiff");
+                        /*
+                        for (int q = 0; q < image.length; q++) {
+                            if (image[q] > max_image[q]) {
+                                max_image[q] = image[q];
+                            }
+                        }
+                        */
+                    } catch (Exception ex) {
+                        Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                
+                
+                
+                JOptionPane.showMessageDialog(null, "Supercomposed image has been saved.");
+                app_.enableLiveMode(liveModeRunning);
+                
+                try {
+                    core_.setCameraDevice(old_cam);
+                } catch (Exception ex) {
+                    Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        };
+        th.start();
+    }//GEN-LAST:event_save_circle_maps_uiActionPerformed
+
+    private void roi_manager_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_roi_manager_uiActionPerformed
+        DualAxisMirrorPlugin.showRoiManager();
+        
+    }//GEN-LAST:event_roi_manager_uiActionPerformed
     /**
      * @param args the command line arguments
      */
@@ -1863,6 +1977,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private javax.swing.JButton add_circle_ui;
     private javax.swing.JButton calibration_button;
     private javax.swing.JComboBox camera_name_ui;
+    private javax.swing.JComboBox camera_name_ui1;
     private javax.swing.JSpinner center_input_x_ui;
     private javax.swing.JSpinner center_input_y_ui;
     private javax.swing.JSpinner circle_frequency_ui;
@@ -1875,7 +1990,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton11;
     private javax.swing.JButton jButton12;
-    private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JLabel jLabel1;
@@ -1932,6 +2046,8 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private javax.swing.JTextField point_shoot_x;
     private javax.swing.JTextField point_shoot_y;
     private javax.swing.JButton reset_daq_ui;
+    private javax.swing.JButton roi_manager_ui;
+    private javax.swing.JButton save_circle_maps_ui;
     private javax.swing.JButton submit_circles_ui;
     private javax.swing.JTabbedPane tabbed_panel;
     private javax.swing.JLabel tirf_calibration_sign;
