@@ -35,12 +35,13 @@ import org.micromanager.utils.ImageUtils;
  * @author phsiao
  */
 public class Util {
-    protected static AtomicBoolean is_freerun_running = new AtomicBoolean(false);
-    protected static AtomicBoolean is_calibration_running = new AtomicBoolean(false);
-    protected static AtomicBoolean stop_calibration_requested = new AtomicBoolean(false);
+    //protected static AtomicBoolean is_freerun_running = new AtomicBoolean(false);
+    //protected static AtomicBoolean is_calibration_running = new AtomicBoolean(false);
+    //protected static AtomicBoolean stop_calibration_requested = new AtomicBoolean(false);
     
-    protected static AtomicBoolean stop_requested = new AtomicBoolean(false);
-    protected static AtomicBoolean is_running = new AtomicBoolean(false);
+    //protected static AtomicBoolean stop_requested = new AtomicBoolean(false);
+    //protected static AtomicBoolean is_running = new AtomicBoolean(false);
+    public static AtomicBoolean is_stop_requested = new AtomicBoolean(false);
     
     public static String plugin_path() {
         return System.getProperty("user.dir") + 
@@ -133,9 +134,7 @@ public class Util {
     public static Point measureSpotOnCamera(CMMCore core, ScriptInterface app,
                     String daq_str, Point2D.Double projectionPoint)
     {
-        if (stop_requested.get()) {
-            return null;
-        }
+        
         try {
             set_voltage(daq_str, projectionPoint.x, projectionPoint.y);
             core.snapImage();
@@ -182,13 +181,11 @@ public class Util {
 
         for (double i = NI.min_v_x; i <= NI.max_v_x; i += spacing) {
             for (double j = NI.min_v_y; j <= NI.max_v_y; j += spacing) {
-                measureAndAddToSpotMap(core, app, daq_str, p_to_v_map, new Point2D.Double(i, j));
+                if (is_stop_requested.get()) {
+                    return null;
+                }
+                measureAndAddToSpotMap(core, app, daq_str, p_to_v_map, new Point2D.Double(i, j));       
             }
-        }
-        
-        if (stop_requested.get()) {
-            
-            return null;
         }
         
         try {
@@ -236,6 +233,9 @@ public class Util {
 
         for (int i = 0; i <= nGrid; i++) {
             for (int j = 0; j <= nGrid; j++) {
+                if (is_stop_requested.get()) {
+                    return null;
+                }
                 slmPoint[i][j] = (Point2D.Double) affine_map.transform(
                         new Point2D.Double(cam_step_x * i + padding,
                         cam_step_y * j + padding), null);
@@ -244,22 +244,28 @@ public class Util {
         // tabulate the camera spot at each of SLM grid points
         for (int i = 0; i <= nGrid; ++i) {
             for (int j = 0; j <= nGrid; ++j) {
+                if (is_stop_requested.get()) {
+                    return null;
+                }
+                
                 Point spot = measureSpotOnCamera(core, app, daq_str, slmPoint[i][j]);
                 if (spot != null) {
                     camPoint[i][j] = toDoublePoint(spot);
                 }
+                
             }
         }
 
-        if (stop_requested.get()) {
-            return null;
-        }
+        
 
         // now make a grid of (square) polygons (in camera's coordinate system)
         // and generate an affine transform for each of these square regions
         Map<Polygon, AffineTransform> bigMap = new HashMap<Polygon, AffineTransform>();
         for (int i = 0; i <= nGrid - 1; ++i) {
             for (int j = 0; j <= nGrid - 1; ++j) {
+                if (is_stop_requested.get()) {
+                   return null;
+                }
                 Polygon poly = new Polygon();
                 addVertex(poly, toIntPoint(camPoint[i][j]));
                 addVertex(poly, toIntPoint(camPoint[i][j + 1]));

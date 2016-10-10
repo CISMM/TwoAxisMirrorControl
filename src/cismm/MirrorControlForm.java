@@ -49,6 +49,8 @@ import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.ReportingUtils;
 
 import cismm.Util;
+import java.lang.reflect.InvocationTargetException;
+import javax.swing.SwingUtilities;
 
 /*
  * To change this template, choose Tools | Templates
@@ -94,24 +96,12 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private ScriptInterface app_;
     private CMMCore core_;
     
-    //AtomicBoolean isRunning_ = new AtomicBoolean(false);
-    //AtomicBoolean stopRequested_ = new AtomicBoolean(false);
-    
     protected static AtomicBoolean is_daq_running = new AtomicBoolean(false);
-    protected static AtomicBoolean stop_requested = new AtomicBoolean(false);
     
-    /*
-    private double min_v_x = -10;
-    private double max_v_x = 10;
-    private double min_v_y = -10;
-    private double max_v_y = 10;
-    
-    private double v_range_x = max_v_x - min_v_x;
-    private double v_range_y = max_v_y - min_v_y;
-    */
+       
     private List<String> daq_bin_list_;
     
-    private Thread calibrate_thread = null;
+    //private Thread calibrate_thread = null;
     private Process daq_proc = null;
     private ExpMode cur_mode = null;
     
@@ -130,7 +120,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
     
     // The order of the strings must match the order of the tabs on the GUI. 
     List<String> mode_str_array = Arrays.asList("TIRF",
-            "PHOTOACTIVATION");
+            "FRAP");
     
     public void stop_daq_proc() {
        if (daq_proc != null) {
@@ -1425,8 +1415,8 @@ public class MirrorControlForm extends javax.swing.JFrame {
         update_cur_mode_based_on_tab();
     }//GEN-LAST:event_tabbed_panelStateChanged
 
-    private boolean is_calibraiton_done() {
-        if (cur_mode.daq_dev_str == null) {
+    private boolean is_calibration_there() {
+        if (cur_mode.poly_mapping == null) {
             JOptionPane.showMessageDialog(null, "No Calibration Data");
             return false;
         }
@@ -1434,9 +1424,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
     }
     
     private List<Double> create_circle_dots(int center_x, int center_y) {
-        if (cur_mode == null) {
-            JOptionPane.showMessageDialog(null,
-                        "No calibration found during creating circles.");
+        if (!is_calibration_there()) {
             return null;
         }
         List<Double> ret = new ArrayList<Double>();
@@ -1544,6 +1532,32 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
     
     private void save_circle_maps_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_save_circle_maps_uiActionPerformed
+
+        /*
+        System.out.print("begging");
+        if (xx_is_running.get()) {
+            xx_is_running.set(false);
+            //xx_is_running.set(true);
+        } else {                                   
+                Thread tt = new Thread("invokeLater thread") {
+                    @Override
+                    public void run() {
+                        xx_is_running.set(true);
+                        while (xx_is_running.get()) {
+                            for (int i = 0; i < 999; ++i) {
+                            }
+                        }
+                        JOptionPane.showMessageDialog(null,
+                                "Thread is done.");
+
+                    }
+                };
+                tt.start();
+                System.out.print("Thread sumbitted.");
+            
+        }      
+        */
+                
         // TODO add your handling code here:     
         Thread th = new Thread("Projector calibration thread") {
             @Override
@@ -1608,7 +1622,8 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 
                 
                 
-                JOptionPane.showMessageDialog(null, "Supercomposed image has been saved.");
+                JOptionPane.showMessageDialog(null
+                        , "Supercomposed image has been saved.");
                 app_.enableLiveMode(liveModeRunning);
                 
                 try {
@@ -1619,6 +1634,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
             }
         };
         th.start();
+        
     }//GEN-LAST:event_save_circle_maps_uiActionPerformed
 
     private void roi_manager_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_roi_manager_uiActionPerformed
@@ -1679,7 +1695,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
     
     private void freerun_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_freerun_uiActionPerformed
              
-        if (!is_calibraiton_done())
+        if (!is_calibration_there())
             return;
         
         boolean daq_running = is_daq_running.get();
@@ -1700,7 +1716,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
     public void stop_calibration()
     {
-        calibrate_thread.interrupt();
+        Util.is_stop_requested.set(true);
         is_daq_running.set(false);
     }
 
@@ -1712,6 +1728,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
         app_.enableLiveMode(false);
 
         cur_mode = mode_map.get(light_mode_drop.getSelectedItem().toString());
+        
 
         if (camera_name_ui.getItemCount() == 0) {
             JOptionPane.showMessageDialog(null,
@@ -1745,39 +1762,46 @@ public class MirrorControlForm extends javax.swing.JFrame {
         cur_mode.center_x = zero_p.x;
         cur_mode.center_y = zero_p.y;
 
-        calibrate_thread = new Thread("Calibration thread") {
+        Thread calibrate_thread = new Thread("Calibration thread") {
             @Override
             public void run() {
-                try {
-                    cur_mode.first_mapping = Util.generateLinearMapping(core_, app_, cur_mode.daq_dev_str);
-                    cur_mode.poly_mapping =
+                try {                   
+                    AffineTransform first_mapping = Util.generateLinearMapping(core_, app_, cur_mode.daq_dev_str);
+                    HashMap<Polygon, AffineTransform> poly_mapping = 
                             (HashMap<Polygon, AffineTransform>) Util.generateNonlinearMapping(
                             core_,
                             app_,
                             cur_mode.daq_dev_str,
                             cur_mode.first_mapping);
                     
-                    saveToDisk(cur_mode);
+                    boolean is_cancelled = (first_mapping == null) ||
+                                           (poly_mapping  == null);
+                    
+                    if (!is_cancelled) {
+                        cur_mode.first_mapping = first_mapping;
+                        cur_mode.poly_mapping = poly_mapping;
+                        saveToDisk(cur_mode);
+                        mark_calibration_label(cur_mode.mode_name);
+                        if (cur_mode.mode_name.equals(mode_str_array.get(0))) {
+                            original_center_x_ui.setText(Integer.toString(cur_mode.center_x));
+                            original_center_y_ui.setText(Integer.toString(cur_mode.center_y));
+                            center_input_x_ui.setValue(Integer.valueOf(cur_mode.center_x));
+                            center_input_y_ui.setValue(Integer.valueOf(cur_mode.center_y));
+                        }
+                    }
 
                     app_.enableLiveMode(liveModeRunning);
-                    JOptionPane.showMessageDialog(IJ.getImage().getWindow(),
-                            "Calibration finished.");
-
+                    JOptionPane.showMessageDialog(null,
+                            "Calibration " + (is_cancelled ?  
+                            "canceled." : "finished."));
+                    
+                             
                 } catch (HeadlessException e) {
                     ReportingUtils.showError(e);
                 } catch (RuntimeException e) {
-                    ReportingUtils.showError(e);
+                    ReportingUtils.showError(e);          
                 } finally {
-                    mark_calibration_label(cur_mode.mode_name);
-                    if (cur_mode.mode_name.equals(mode_str_array.get(0))) {
-                        original_center_x_ui.setText(Integer.toString(cur_mode.center_x));
-                        original_center_y_ui.setText(Integer.toString(cur_mode.center_y));
-                        center_input_x_ui.setValue(Integer.valueOf(cur_mode.center_x));
-                        center_input_y_ui.setValue(Integer.valueOf(cur_mode.center_y));
-                    }
-                    is_daq_running.set(false);
-                    calibrate_ui.setSelected(false);
-                    calibrate_ui.setText("Calibrate Now!");
+                    Util.is_stop_requested.set(false);
                 }
             }
         };
@@ -1841,7 +1865,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
     
     private void submit_circles_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_submit_circles_uiActionPerformed
     
-        if (!is_calibraiton_done())
+        if (!is_calibration_there())
             return;
              
         boolean daq_running = is_daq_running.get();
