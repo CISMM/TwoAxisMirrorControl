@@ -12,8 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.ReportingUtils;
-
-import cismm.NI;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.plugin.filter.GaussianBlur;

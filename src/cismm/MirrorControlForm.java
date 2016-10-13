@@ -1,6 +1,5 @@
 package cismm;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
@@ -50,6 +49,7 @@ import org.micromanager.utils.ReportingUtils;
 
 import cismm.Util;
 import java.lang.reflect.InvocationTargetException;
+import javax.swing.AbstractListModel;
 import javax.swing.SwingUtilities;
 
 /*
@@ -90,6 +90,34 @@ public class MirrorControlForm extends javax.swing.JFrame {
                    Double.toString(circle_frequency) + "Hz";
         }  
     }
+    
+    public class CircleListModel extends DefaultListModel {
+
+        List<TIRFCircle> circle_list = new ArrayList<TIRFCircle>();
+
+        
+//        @Override
+//        public Object getElementAt(int arg0) {
+//            return circle_list.get(arg0);
+//        }
+//
+//        @Override
+//        public int getSize() {
+//            return circle_list.size();
+//        }
+
+        public void addElement(TIRFCircle t) {
+            System.out.println("adding");
+            circle_list.add(t);
+            System.out.println(circle_list.toString());
+            fireIntervalAdded(this, getSize()-1, getSize()-1);
+        }
+
+        public void removeElement(int ind) {
+            circle_list.remove(ind);
+            fireIntervalRemoved(this, ind, ind);
+        }
+    }
     /**
      * Creates new form MirrorControlForm
      */
@@ -108,11 +136,9 @@ public class MirrorControlForm extends javax.swing.JFrame {
     
     Map<String, ExpMode> mode_map = new HashMap<String, ExpMode>();
     
-    // tirf_loops contains TIRFCircle objects
-    // tirf_loops_model contains strings shown on GUI
-    // To update GUI, one needs to update tirf_loops_model from tirf_loops,
-    // and then display the updated tirf_loops_model string.
-    List<TIRFCircle> tirf_loops = new ArrayList<TIRFCircle>();
+    
+    //List<TIRFCircle> tirf_loops = new ArrayList<TIRFCircle>();
+    // Model of the JList that contains the submitted circles.
     DefaultListModel tirf_loops_model = new DefaultListModel();
     
     BufferedWriter writer_to_daq = null;
@@ -187,20 +213,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
             }
         }    
     }
-    
-    private void update_tirf_model_ui() {
-        tirf_loops_ui.setModel(tirf_loops_model);
-    }
-    
-    private void load_tirf_strings() {
-        for (TIRFCircle t: tirf_loops) {
-            tirf_loops_model.addElement(t.toString());
-        }
-    }
-    private void load_tirf_loops_model_to_ui() {
-        load_tirf_strings();
-        update_tirf_model_ui();
-    }
 
     public MirrorControlForm(CMMCore core, ScriptInterface app, List<String> daq_bin_list) {
         //public MirrorControlForm(List<String> daq_bain_list) {
@@ -236,8 +248,9 @@ public class MirrorControlForm extends javax.swing.JFrame {
         daq_bin_list_ = daq_bin_list;
         fill_mode_map();
         fill_camera_list();
-        load_tirf_loops_model_to_ui();
         update_cur_mode_based_on_tab();
+        
+        tirf_loops_ui.setModel(tirf_loops_model);
     }
 
     /**
@@ -276,9 +289,9 @@ public class MirrorControlForm extends javax.swing.JFrame {
         jPanel5 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tirf_loops_ui = new javax.swing.JList();
-        jButton10 = new javax.swing.JButton();
-        jButton11 = new javax.swing.JButton();
-        jButton12 = new javax.swing.JButton();
+        remove_circle_ui = new javax.swing.JButton();
+        move_circle_up_ui = new javax.swing.JButton();
+        move_circle_down_ui = new javax.swing.JButton();
         add_circle_ui = new javax.swing.JButton();
         input_volt_x_ui = new javax.swing.JSpinner();
         input_volt_y_ui = new javax.swing.JSpinner();
@@ -481,11 +494,26 @@ public class MirrorControlForm extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(tirf_loops_ui);
 
-        jButton10.setText("Delete");
+        remove_circle_ui.setText("Remove");
+        remove_circle_ui.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                remove_circle_uiActionPerformed(evt);
+            }
+        });
 
-        jButton11.setText("Move Up");
+        move_circle_up_ui.setText("Move Up");
+        move_circle_up_ui.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                move_circle_up_uiActionPerformed(evt);
+            }
+        });
 
-        jButton12.setText("Move Down");
+        move_circle_down_ui.setText("Move Down");
+        move_circle_down_ui.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                move_circle_down_uiActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
@@ -495,9 +523,9 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton10, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton11, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton12))
+                    .addComponent(remove_circle_ui, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(move_circle_up_ui, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(move_circle_down_ui))
                 .addGap(6, 6, 6))
         );
         jPanel5Layout.setVerticalGroup(
@@ -506,11 +534,11 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addComponent(jButton10)
+                        .addComponent(remove_circle_ui)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton11)
+                        .addComponent(move_circle_up_ui)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton12)))
+                        .addComponent(move_circle_down_ui)))
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
@@ -958,41 +986,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    /*
-     private String getPinStr(LightMode mode) {
-     switch(mode) {
-     case TIRF:
-     return pin_array;
-     case PHOTOBLEACHING:
-     return pb_pin;
-     default:
-     break;
-     }
-     return null;      
-     }
-     */
-    
-//    private static Point[] getVertices(Polygon polygon) {
-//        Point vertices[] = new Point[polygon.npoints];
-//        for (int i = 0; i < polygon.npoints; ++i) {
-//            vertices[i] = new Point(polygon.xpoints[i], polygon.ypoints[i]);
-//        }
-//        return vertices;
-//    }
-
-    /**
-     * Gets the vectorial mean of an array of Points.
-     */
-//    private static Point2D.Double meanPosition2D(Point[] points) {
-//        double xsum = 0;
-//        double ysum = 0;
-//        int n = points.length;
-//        for (int i = 0; i < n; ++i) {
-//            xsum += points[i].x;
-//            ysum += points[i].y;
-//        }
-//        return new Point2D.Double(xsum / n, ysum / n);
-//    }
 
     private Point2D.Double transformPoint(Map<Polygon, AffineTransform> mapping, Point2D.Double pt) {
         Set<Polygon> set = mapping.keySet();
@@ -1026,323 +1019,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
          return (Point2D.Double) mapping.get(bestPoly).transform(pt, null);
          */
     }
-
-    /**
-     * Simple utility methods for points
-     *
-     * Adds a point to an existing polygon.
-     */
-//    private static void addVertex(Polygon polygon, Point p) {
-//        polygon.addPoint(p.x, p.y);
-//    }
-
-    /**
-     * Converts a Point with double values for x,y to a point with x and y
-     * rounded to the nearest integer.
-     */
-//    private static Point toIntPoint(Point2D.Double pt) {
-//        return new Point((int) (0.5 + pt.x), (int) (0.5 + pt.y));
-//    }
-
-    /**
-     * Converts a Point with integer values to a Point with x and y doubles.
-     */
-//    private static Point2D.Double toDoublePoint(Point pt) {
-//        return new Point2D.Double(pt.x, pt.y);
-//    }
-
-    /**
-     * Illuminate a spot at position x,y.
-     */
-    /*
-    private void displaySpot(double x, double y) {
-        if (cur_mode.daq_dev_str == null) {
-            JOptionPane.showMessageDialog(null, "Need to calibrate first");
-            return;
-        }
-        if (x >= min_v_x && x <= (v_range_x + min_v_x)
-                && y >= min_v_y && y <= (v_range_y + min_v_y))
-                 {
-            //String pin_str = getPinStr(LightMode.TIRF);
-            two_ao_update(cur_mode.daq_dev_str, Double.toString(x), Double.toString(y));
-        }
-    }
-    */
-    /*
-    public static Point findMaxPixel(ImageProcessor proc) {
-
-        // If there is no signal, return a point at (-2, -2)
-        int[] min_max = ImageUtils.getMinMax(proc.getPixels());
-        if (min_max[0] == 0) {
-            min_max[0] = 1;
-        }
-        //JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "min:" + String.valueOf(min_max[0])
-        //        + " max:" + String.valueOf(min_max[1]));
-
-        if ((int) min_max[1] / (int) min_max[0] < 5000) {
-            return new Point(-2, -2);
-        }
-
-        int width = proc.getWidth();
-        int imax = ImageUtils.findArrayMax(proc.getPixels());
-
-        
-        int y = imax / width;
-        int x = imax % width;
-        return new Point(x, y);
-    }
-    */
-    // Find the brightest spot in an ImageProcessor. The image is first blurred
-    // and then the pixel with maximum intensity is returned.
-    /*
-    private static Point findPeak(ImageProcessor proc) {
-        ImageProcessor blurImage = proc.duplicate();
-        
-        
-        blurImage.setRoi((Roi) null);
-        GaussianBlur blur = new GaussianBlur();
-        blur.blurGaussian(blurImage, 5, 5, 0.01);
-        
-        //showProcessor("findPeak",proc);
-        //Point x = ImageUtils.findMaxPixel(blurImage);
-        Point x = findMaxPixel(blurImage);
-        x.translate(1, 1);
-        return x;
-    }
-    */
-    /**
-     * Display a spot using the projection device, and return its current
-     * location on the camera. Does not do sub-pixel localization, but could
-     * (just would change its return type, most other code would be OK with
-     * this)
-     */
-    /*
-    private Point measureSpotOnCamera(Point2D.Double projectionPoint, boolean addToAlbum) {
-        if (stopRequested_.get()) {
-            return null;
-        }
-        try {
-
-            displaySpot(projectionPoint.x, projectionPoint.y);
-            core_.snapImage();
-            TaggedImage image = core_.getTaggedImage();
-            ImageProcessor proc1 = ImageUtils.makeMonochromeProcessor(image);
-            Point maxPt = findPeak(proc1);
-            // JonD: should use the exposure that the user has set to avoid hardcoding a value;
-            // if the user wants a different exposure time for calibration it's easy to specify
-            // => commenting out next two lines
-            // long originalExposure = dev_.getExposure();
-            // dev_.setExposure(500000);
-
-            // NS: Timing between displaySpot and snapImage is critical
-            // we have no idea how fast the device will respond
-            // if we add "dev_.waitForDevice(), then the RAPP UGA-40 will already have ended
-            // its exposure before returning control
-            // For now, wait for a user specified delay
-
-            //int delayMs = Integer.parseInt(delayField_.getText());
-            //Thread.sleep(delayMs);
-
-            //core_.snapImage();
-            // NS: just make sure to wait until the spot is no longer displayed
-            // JonD: time to wait is simply the exposure time less any delay
-
-            // Maybe we need this??
-            // Thread.sleep((int) (dev_.getExposure()/1000) - delayMs);
-
-            // JonD: see earlier comment => commenting out next line
-            // dev_.setExposure(originalExposure);
-            //TaggedImage taggedImage2 = core_.getTaggedImage();
-            //ImageProcessor proc2 = ImageUtils.makeMonochromeProcessor(taggedImage2);
-            //app_.displayImage(taggedImage2);
-            // saving images to album is useful for debugging
-            // TODO figure out why this doesn't work towards the end; maybe limitation on # of images in album
-            // if (addToAlbum) {
-            //    app_.addToAlbum(taggedImage2);
-            // }
-            //ImageProcessor diffImage = ImageUtils.subtractImageProcessors(proc2.convertToFloatProcessor(), proc1.convertToFloatProcessor());
-            //app_.closeAcquisitionWindow(app_.getSnapLiveWin().getName());
-            //app_.closeAllAcquisitions();
-
-
-            app_.displayImage(image);
-            app_.getSnapLiveWin().getImagePlus().setRoi(new PointRoi(maxPt.x, maxPt.y));
-
-
-            // NS: what is this second sleep good for????
-            // core_.sleep(500);
-            return maxPt;
-        } catch (Exception e) {
-            ReportingUtils.showError(e);
-            return null;
-        }
-    }
-    */
-    /**
-     * Illuminate a spot at ptSLM, measure its location on the camera, and add
-     * the resulting point pair to the spotMap.
-     */
-//    private void measureAndAddToSpotMap(Map<Point2D.Double, Point2D.Double> spotMap,
-//            Point2D.Double ptSLM) {
-//        Point ptCam = measureSpotOnCamera(ptSLM, false);
-//        if (ptCam != null && ptCam.x >= 0) {
-//            Point2D.Double ptCamDouble = new Point2D.Double(ptCam.x, ptCam.y);
-//            spotMap.put(ptCamDouble, ptSLM);
-//        }
-//    }
-
-    /**
-     * Illuminates and images five control points near the center, and return an
-     * affine transform mapping from image coordinates to phototargeter
-     * coordinates.
-     */
-//    private AffineTransform generateLinearMapping() {
-//        //double centerX = v_range_x / 2 + min_v_x;
-//        //double centerY = v_range_y / 2 + min_v_y;
-//        double spacing = Math.min(v_range_x, v_range_y) / 10;  // use 10% of galvo/SLM range
-//        Map<Point2D.Double, Point2D.Double> big_map = new HashMap<Point2D.Double, Point2D.Double>();
-//
-//        for (double i = min_v_x; i <= max_v_x; i += spacing) {
-//            for (double j = min_v_y; j <= max_v_y; j += spacing) {
-//                measureAndAddToSpotMap(big_map, new Point2D.Double(i, j));
-//            }
-//        }
-//        /*
-//         measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX, centerY));
-//         measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX, centerY + spacing));
-//         measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX + spacing, centerY));
-//         measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX, centerY - spacing));
-//         measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX - spacing, centerY));
-//         */
-//        if (stopRequested_.get()) {
-//            return null;
-//        }
-//        try {
-//            // require that the RMS value between the mapped points and the measured points be less than 5% of image size
-//            // also require that the RMS value be less than the spacing between points in the galvo/SLM coordinate system
-//            // (2nd requirement was probably the intent of the code until r15505, but parameters were interchanged in call) 
-//            final long imageSize = Math.min(core_.getImageWidth(), core_.getImageHeight());
-//            //return MathFunctions.generateAffineTransformFromPointPairs(spotMap, imageSize * 0.05, spacing);
-//            return MathFunctions.generateAffineTransformFromPointPairs(big_map);
-//        } catch (Exception e) {
-//            throw new RuntimeException("Spots aren't detected as expected. Is DMD in focus and roughly centered in camera's field of view?");
-//        }
-//    }
-
-    /**
-     * Generate a nonlinear calibration mapping for the current device settings.
-     * A rectangular lattice of points is illuminated one-by-one on the
-     * projection device, and locations in camera pixels of corresponding spots
-     * on the camera image are recorded. For each rectangular cell in the grid,
-     * we take the four point mappings (camera to projector) and generate a
-     * local AffineTransform using linear least squares. Cells with suspect
-     * measured corner positions are discarded. A mapping of cell polygon to
-     * AffineTransform is generated.
-     */
-//    private Map<Polygon, AffineTransform> generateNonlinearMapping() {
-//
-//        // get the affine transform near the center spot
-//        cur_mode.first_mapping = generateLinearMapping();
-//
-//        // then use this single transform to estimate what SLM coordinates 
-//        // correspond to the image's corner positions 
-////        final Point2D.Double camCorner1 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double(0, 0), null);
-////        final Point2D.Double camCorner2 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double((int) core_.getImageWidth(), (int) core_.getImageHeight()), null);
-////        final Point2D.Double camCorner3 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double(0, (int) core_.getImageHeight()), null);
-////        final Point2D.Double camCorner4 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double((int) core_.getImageWidth(), 0), null);
-//
-//        // figure out camera's bounds in SLM coordinates
-//        // min/max because we don't know the relative orientation of the camera and SLM
-//        // do some extra checking in case camera/SLM aren't at exactly 90 degrees from each other, 
-//        // but still better that they are at 0, 90, 180, or 270 degrees from each other
-//        // TODO can create grid along camera location instead of SLM's if camera is the limiting factor; this will make arbitrary rotation possible
-////        final double camLeft = Math.min(Math.min(Math.min(camCorner1.x, camCorner2.x), camCorner3.x), camCorner4.x);
-////        final double camRight = Math.max(Math.max(Math.max(camCorner1.x, camCorner2.x), camCorner3.x), camCorner4.x);
-////        final double camTop = Math.min(Math.min(Math.min(camCorner1.y, camCorner2.y), camCorner3.y), camCorner4.y);
-////        final double camBottom = Math.max(Math.max(Math.max(camCorner1.y, camCorner2.y), camCorner3.y), camCorner4.y);
-//
-//        // these are the SLM's bounds
-////        final double slmLeft = min_v_x;
-////        final double slmRight = v_range_x + min_v_x;
-////        final double slmTop = min_v_y;
-////        final double slmBottom = v_range_y + min_v_y;
-//
-//        // figure out the "overlap region" where both the camera and SLM
-//        // can "see", expressed in SLM coordinates
-////        final double left = Math.max(camLeft, slmLeft);
-////        final double right = Math.min(camRight, slmRight);
-////        final double top = Math.max(camTop, slmTop);
-////        final double bottom = Math.min(camBottom, slmBottom);
-////        final double width = right - left;
-////        final double height = bottom - top;
-//
-//
-//
-//        // compute a grid of SLM points inside the "overlap region"
-//        // nGrid is how many polygons in both X and Y
-//        // require (nGrid + 1)^2 spot measurements to get nGrid^2 squares
-//        // TODO allow user to change nGrid
-//        final int nGrid = 7;
-//        Point2D.Double slmPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
-//        Point2D.Double camPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
-//
-//        final int padding = 25;
-//        final int cam_width = (int) core_.getImageWidth() - padding * 2;
-//        final int cam_height = (int) core_.getImageHeight() - padding * 2;
-//        final double cam_step_x = cam_width / nGrid;
-//        final double cam_step_y = cam_height / nGrid;
-//
-//        for (int i = 0; i <= nGrid; i++) {
-//            for (int j = 0; j <= nGrid; j++) {
-//                slmPoint[i][j] = (Point2D.Double) cur_mode.first_mapping.transform(
-//                        new Point2D.Double(cam_step_x * i + padding,
-//                        cam_step_y * j + padding), null);
-//            }
-//        }
-//        // tabulate the camera spot at each of SLM grid points
-//        for (int i = 0; i <= nGrid; ++i) {
-//            for (int j = 0; j <= nGrid; ++j) {
-//                Point spot = measureSpotOnCamera(slmPoint[i][j], true);
-//                if (spot != null) {
-//                    camPoint[i][j] = toDoublePoint(spot);
-//                }
-//            }
-//        }
-//
-//        if (stopRequested_.get()) {
-//            return null;
-//        }
-//
-//        // now make a grid of (square) polygons (in camera's coordinate system)
-//        // and generate an affine transform for each of these square regions
-//        Map<Polygon, AffineTransform> bigMap = new HashMap<Polygon, AffineTransform>();
-//        for (int i = 0; i <= nGrid - 1; ++i) {
-//            for (int j = 0; j <= nGrid - 1; ++j) {
-//                Polygon poly = new Polygon();
-//                addVertex(poly, toIntPoint(camPoint[i][j]));
-//                addVertex(poly, toIntPoint(camPoint[i][j + 1]));
-//                addVertex(poly, toIntPoint(camPoint[i + 1][j + 1]));
-//                addVertex(poly, toIntPoint(camPoint[i + 1][j]));
-//
-//                Map<Point2D.Double, Point2D.Double> map = new HashMap<Point2D.Double, Point2D.Double>();
-//                map.put(camPoint[i][j], slmPoint[i][j]);
-//                map.put(camPoint[i][j + 1], slmPoint[i][j + 1]);
-//                map.put(camPoint[i + 1][j], slmPoint[i + 1][j]);
-//                map.put(camPoint[i + 1][j + 1], slmPoint[i + 1][j + 1]);
-//                double srcDX = Math.abs((camPoint[i + 1][j].x - camPoint[i][j].x)) / 4;
-//                double srcDY = Math.abs((camPoint[i][j + 1].y - camPoint[i][j].y)) / 4;
-//                double srcTol = Math.max(srcDX, srcDY);
-//
-//                try {
-//                    AffineTransform transform = MathFunctions.generateAffineTransformFromPointPairs(map, srcTol, Double.MAX_VALUE);
-//                    bigMap.put(poly, transform);
-//                } catch (Exception e) {
-//                    ReportingUtils.logError("Bad cell in mapping.");
-//                }
-//            }
-//        }
-//        return bigMap;
-//    }
 
     private Preferences getCalibrationNode() {
         try {
@@ -1386,10 +1062,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
         JavaUtils.putObjectInPrefs(p, mode.mode_name, mode);
     }
 
-    
-
-    /*    */
-    
     private void point_shoot_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_point_shoot_buttonActionPerformed
 
         double x = Double.parseDouble(point_shoot_x.getText());
@@ -1466,13 +1138,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
             Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
-    
-
-    
-
-
-            
+         
     private void reset_daq_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reset_daq_uiActionPerformed
 
         // Get the device name from current mode
@@ -1497,11 +1163,11 @@ public class MirrorControlForm extends javax.swing.JFrame {
     }//GEN-LAST:event_reset_daq_uiActionPerformed
 
     private void add_circle_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_add_circle_uiActionPerformed
+       
         TIRFCircle tc = new TIRFCircle();
         
         List<Double> circle_px = create_circle_dots((Integer)center_input_x_ui.getValue(),
                                                     (Integer)center_input_y_ui.getValue());
-      
         if (circle_px == null)
             return;
         
@@ -1509,14 +1175,12 @@ public class MirrorControlForm extends javax.swing.JFrame {
         for (int i = 0; i < circle_px.size() - 1; i += 2) {
             Point2D.Double p = new Point2D.Double(circle_px.get(i), circle_px.get(i + 1));
             Point2D.Double trans_p = transformPoint(cur_mode.poly_mapping, p);
-
-
+            
             transformed_points.add(String.valueOf(trans_p.x));
             transformed_points.add(String.valueOf(trans_p.y));
             
             //String x = String.format("%.1f", (Double)trans_p.x);
-            //String y = String.format("%.1f", (Double)trans_p.y);
-            
+            //String y = String.format("%.1f", (Double)trans_p.y);            
         }
         
         tc.volts = transformed_points;
@@ -1525,40 +1189,12 @@ public class MirrorControlForm extends javax.swing.JFrame {
         tc.center_x = (Integer)center_input_x_ui.getValue();
         tc.center_y = (Integer)center_input_y_ui.getValue();
         
-        tirf_loops.add(tc);
-        tirf_loops_model.addElement(tc.toString());
-        update_tirf_model_ui();
+        tirf_loops_model.addElement(tc);
     }//GEN-LAST:event_add_circle_uiActionPerformed
 
     
     private void save_circle_maps_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_save_circle_maps_uiActionPerformed
-
-        /*
-        System.out.print("begging");
-        if (xx_is_running.get()) {
-            xx_is_running.set(false);
-            //xx_is_running.set(true);
-        } else {                                   
-                Thread tt = new Thread("invokeLater thread") {
-                    @Override
-                    public void run() {
-                        xx_is_running.set(true);
-                        while (xx_is_running.get()) {
-                            for (int i = 0; i < 999; ++i) {
-                            }
-                        }
-                        JOptionPane.showMessageDialog(null,
-                                "Thread is done.");
-
-                    }
-                };
-                tt.start();
-                System.out.print("Thread sumbitted.");
-            
-        }      
-        */
-                
-        // TODO add your handling code here:     
+     
         Thread th = new Thread("Projector calibration thread") {
             @Override
             public void run() {
@@ -1571,11 +1207,10 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 } catch (Exception ex) {
                     Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
                 }
-
                 
                 final List<String> all_volts = new ArrayList<String>();
-                for (TIRFCircle tc : tirf_loops) {
-                    all_volts.addAll(tc.volts);
+                for (int i=0; i < tirf_loops_model.size(); ++i) {
+                    all_volts.addAll(((TIRFCircle)(tirf_loops_model.get(i))).volts);
                 }
                 
                 short max_image[] = null;
@@ -1590,9 +1225,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
                 // Compare to max_image and save the maximum value for each pixel
                 String prefix = "tirf_map_";
-                for (int i = 0, cnt = 0; i < all_volts.size(); i += 2, cnt++) {
-                //for (int i = 0; i < 5; i ++) {
-                
+                for (int i = 0, cnt = 0; i < all_volts.size(); i += 2, cnt++) {    
                     Util.set_voltage(cur_mode.daq_dev_str,
                             Double.valueOf(all_volts.get(i)),
                             Double.valueOf(all_volts.get(i + 1)));
@@ -1619,8 +1252,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
-                
-                
+                              
                 
                 JOptionPane.showMessageDialog(null
                         , "Supercomposed image has been saved.");
@@ -1841,15 +1473,15 @@ public class MirrorControlForm extends javax.swing.JFrame {
         args.add(cur_mode.daq_dev_str);
         args.add("/Dev1/PFI0");
         args.add("2");
-        Double sampling_rate = tirf_loops.get(0).circle_frequency
-                * tirf_loops.get(0).volts.size() / 2;
-
+        Double sampling_rate = ((TIRFCircle)(tirf_loops_model.get(0))).circle_frequency
+                * ((TIRFCircle)(tirf_loops_model.get(0))).volts.size() / 2;
+        
         args.add(Integer.toString(sampling_rate.intValue()));
-        args.add(Integer.toString(tirf_loops.size()));
-        args.add(Integer.toString(tirf_loops.get(0).volts.size() / 2));
+        args.add(Integer.toString(tirf_loops_model.size()));
+        args.add(Integer.toString(((TIRFCircle)(tirf_loops_model.get(0))).volts.size() / 2));
 
-        for (TIRFCircle tc : tirf_loops) {
-            args.addAll(tc.volts);
+        for (int i=0; i < tirf_loops_model.size(); ++i) {
+                    args.addAll(((TIRFCircle)(tirf_loops_model.get(i))).volts);
         }
         
         Thread th = new Thread("Submit circles thread") {
@@ -1883,6 +1515,39 @@ public class MirrorControlForm extends javax.swing.JFrame {
             submit_circles_ui.setText("Cancel");
         } else {}
     }//GEN-LAST:event_submit_circles_uiActionPerformed
+
+    private void remove_circle_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_remove_circle_uiActionPerformed
+        int selected = tirf_loops_ui.getSelectedIndex();
+        if (selected == -1)
+            return;
+        tirf_loops_model.remove(selected);
+    }//GEN-LAST:event_remove_circle_uiActionPerformed
+
+    private void move_circle_up_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_move_circle_up_uiActionPerformed
+        int selected = tirf_loops_ui.getSelectedIndex();
+        if (selected == -1 || selected == 0)
+            return;
+        Object selected_item = (TIRFCircle) tirf_loops_model.get(selected);
+        Object pre_item = (TIRFCircle) tirf_loops_model.get(selected-1);
+        
+        tirf_loops_model.set(selected, pre_item);
+        tirf_loops_model.set(selected-1, selected_item);
+        
+        tirf_loops_ui.setSelectedIndex(selected-1);
+    }//GEN-LAST:event_move_circle_up_uiActionPerformed
+
+    private void move_circle_down_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_move_circle_down_uiActionPerformed
+        int selected = tirf_loops_ui.getSelectedIndex();
+        if (selected == -1 || selected == tirf_loops_model.size()-1)
+            return;
+        Object selected_item = (TIRFCircle) tirf_loops_model.get(selected);
+        Object next_item = (TIRFCircle) tirf_loops_model.get(selected+1);
+        
+        tirf_loops_model.set(selected, next_item);
+        tirf_loops_model.set(selected+1, selected_item);
+        
+        tirf_loops_ui.setSelectedIndex(selected+1);
+    }//GEN-LAST:event_move_circle_down_uiActionPerformed
     /**
      * @param args the command line arguments
      */
@@ -1931,9 +1596,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private javax.swing.JToggleButton freerun_ui;
     private javax.swing.JSpinner input_volt_x_ui;
     private javax.swing.JSpinner input_volt_y_ui;
-    private javax.swing.JButton jButton10;
-    private javax.swing.JButton jButton11;
-    private javax.swing.JButton jButton12;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JLabel jLabel1;
@@ -1983,12 +1645,15 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private javax.swing.JSpinner jSpinner3;
     private javax.swing.JTable jTable1;
     private javax.swing.JComboBox light_mode_drop;
+    private javax.swing.JButton move_circle_down_ui;
+    private javax.swing.JButton move_circle_up_ui;
     private javax.swing.JLabel original_center_x_ui;
     private javax.swing.JLabel original_center_y_ui;
     private javax.swing.JLabel photobleaching_calibration_sign;
     private javax.swing.JButton point_shoot_button;
     private javax.swing.JTextField point_shoot_x;
     private javax.swing.JTextField point_shoot_y;
+    private javax.swing.JButton remove_circle_ui;
     private javax.swing.JButton reset_daq_ui;
     private javax.swing.JButton roi_manager_ui;
     private javax.swing.JButton save_circle_maps_ui;
