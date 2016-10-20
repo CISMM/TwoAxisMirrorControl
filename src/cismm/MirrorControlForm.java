@@ -1,13 +1,8 @@
 package cismm;
 
 import ij.ImagePlus;
-import ij.gui.PointRoi;
-import ij.gui.Roi;
 import ij.io.FileSaver;
-import ij.plugin.filter.GaussianBlur;
-import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
 import java.awt.Color;
 import java.awt.HeadlessException;
 import java.awt.Point;
@@ -44,13 +39,9 @@ import mmcorej.TaggedImage;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.ReportingUtils;
 
 import cismm.Util;
-import java.lang.reflect.InvocationTargetException;
-import javax.swing.AbstractListModel;
-import javax.swing.SwingUtilities;
 
 /*
  * To change this template, choose Tools | Templates
@@ -62,6 +53,8 @@ import javax.swing.SwingUtilities;
  */
 public class MirrorControlForm extends javax.swing.JFrame {
 
+    static final String version_str = "1.0";
+    
     public static class ExpMode implements Serializable {
         
         public String mode_name = null;
@@ -249,7 +242,9 @@ public class MirrorControlForm extends javax.swing.JFrame {
         fill_mode_map();
         fill_camera_list();
         update_cur_mode_based_on_tab();
-        
+        tabbed_panel.setEnabledAt(1, false);    
+        this.setTitle("DualAxisMirror Plugin - " + version_str);
+       
         tirf_loops_ui.setModel(tirf_loops_model);
     }
 
@@ -952,20 +947,18 @@ public class MirrorControlForm extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(tabbed_panel)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(tabbed_panel)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel16)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(photobleaching_calibration_sign)
-                                .addGap(0, 0, Short.MAX_VALUE)))
-                        .addContainerGap())
+                        .addComponent(jLabel16)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(photobleaching_calibration_sign)
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(tirf_calibration_sign)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
