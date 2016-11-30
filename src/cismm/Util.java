@@ -4,6 +4,7 @@
  */
 package cismm;
 
+import static cismm.MirrorControlForm.cur_mode;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.geom.AffineTransform;
@@ -20,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -47,22 +49,35 @@ public class Util {
                File.separator;
     }
     
-    public static Process run_external_program(String prog, List<String> args, boolean wait_till_done) {
+    
+//    public static Process run_external_program(String prog, List<String> args, boolean wait_till_done) {
+//        Process proc = null;
+//        try {
+//            args.add(0, prog);
+//
+//            ProcessBuilder pb = new ProcessBuilder(args);
+//            proc = pb.start();
+//            
+//            if (wait_till_done) {
+//                proc.waitFor();
+//                proc.destroy();
+//            }
+//            
+//        } catch (IOException ex) {
+//            Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+//        } catch (InterruptedException ex) {
+//            Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        return proc;
+//    }
+    public static Process run_external_program(String prog, List<String> args) {
         Process proc = null;
         try {
             args.add(0, prog);
 
             ProcessBuilder pb = new ProcessBuilder(args);
             proc = pb.start();
-            
-            if (wait_till_done) {
-                proc.waitFor();
-                proc.destroy();
-            }
-            
         } catch (IOException ex) {
-            Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InterruptedException ex) {
             Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
         }
         return proc;
@@ -83,8 +98,10 @@ public class Util {
             args.add(Double.toString(x));
             args.add(Double.toString(y));
       
-            run_external_program(plugin_path() + "two_ao_update.exe",
-                                 args, true);
+//            run_external_program(plugin_path() + "two_ao_update.exe",
+//                                 args, true);
+                run_external_program(plugin_path() + "two_ao_update.exe",
+                                 args);
         }
     }
     
@@ -288,5 +305,38 @@ public class Util {
             }
         }
         return bigMap;
+    }
+    
+    public static Point2D.Double transformPoint(Map<Polygon, AffineTransform> mapping, Point2D.Double pt) {
+        Set<Polygon> set = mapping.keySet();
+        // First find out if the given point is inside a cell, and if so,
+        // transform it with that cell's AffineTransform.
+
+        for (Polygon poly : set) {
+            if (poly.contains(pt)) {
+                return (Point2D.Double) mapping.get(poly).transform(pt, null);
+            }
+        }
+
+        // The point isn't inside any cell, so use the global mapping
+        return (Point2D.Double) cur_mode.first_mapping.transform(pt, null);
+
+        // The point isn't inside any cell, so search for the closest cell
+        // and use the AffineTransform from that.
+        /*
+         double minDistance = Double.MAX_VALUE;
+         Polygon bestPoly = null;
+         for (Polygon poly : set) {
+         double distance = meanPosition2D(getVertices(poly)).distance(pt.x, pt.y);
+         if (minDistance > distance) {
+         bestPoly = poly;
+         minDistance = distance;
+         }
+         }
+         if (bestPoly == null) {
+         throw new RuntimeException("Unable to map point to device.");
+         }
+         return (Point2D.Double) mapping.get(bestPoly).transform(pt, null);
+         */
     }
 }

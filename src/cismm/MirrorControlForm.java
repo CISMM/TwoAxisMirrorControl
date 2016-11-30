@@ -42,6 +42,12 @@ import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
 import cismm.Util;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComboBox;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 
 /*
  * To change this template, choose Tools | Templates
@@ -54,6 +60,8 @@ import cismm.Util;
 public class MirrorControlForm extends javax.swing.JFrame {
 
     static final String version_str = "1.0";
+    
+    //TIRFPanel tirf_pan = new TIRFPanel();
     
     public static class ExpMode implements Serializable {
         
@@ -123,8 +131,8 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private List<String> daq_bin_list_;
     
     //private Thread calibrate_thread = null;
-    private Process daq_proc = null;
-    private ExpMode cur_mode = null;
+    public static Process daq_proc = null;
+    public static ExpMode cur_mode = null;
     
     
     Map<String, ExpMode> mode_map = new HashMap<String, ExpMode>();
@@ -141,7 +149,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
     List<String> mode_str_array = Arrays.asList("TIRF",
             "FRAP");
     
-    public void stop_daq_proc() {
+    public static void stop_daq_proc() {
        if (daq_proc != null) {
             daq_proc.destroy();
             try {
@@ -234,7 +242,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
         });
 
         this.setDefaultCloseOperation(HIDE_ON_CLOSE);
-
+        //tabbed_panel.add("aaa", tirf_pan);
         core_ = core;
         app_ = app;
 
@@ -317,6 +325,21 @@ public class MirrorControlForm extends javax.swing.JFrame {
         jSeparator1 = new javax.swing.JSeparator();
         point_shoot_x = new javax.swing.JTextField();
         point_shoot_y = new javax.swing.JTextField();
+        jPanel6 = new javax.swing.JPanel();
+        jLabel36 = new javax.swing.JLabel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        pa_table = new javax.swing.JTable();
+        add_pa_row_ui = new javax.swing.JButton();
+        remove_pa_row_ui = new javax.swing.JButton();
+        jSeparator3 = new javax.swing.JSeparator();
+        jLabel37 = new javax.swing.JLabel();
+        jLabel38 = new javax.swing.JLabel();
+        jSpinner5 = new javax.swing.JSpinner();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        property_table = new javax.swing.JTable();
+        start_pa_ui = new javax.swing.JButton();
+        add_property_ui = new javax.swing.JButton();
+        remove_property_ui = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jPanel7 = new javax.swing.JPanel();
         camera_name_ui = new javax.swing.JComboBox();
@@ -374,7 +397,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
         jLabel21.setText("Circle Frequency:");
 
-        circle_radius_ui.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(2800), Integer.valueOf(0), null, Integer.valueOf(1)));
+        circle_radius_ui.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(4200), Integer.valueOf(0), null, Integer.valueOf(1)));
 
         circle_samples_ui.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(200), Integer.valueOf(0), null, Integer.valueOf(1)));
 
@@ -595,7 +618,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(submit_circles_ui))))
-                .addContainerGap(16, Short.MAX_VALUE))
+                .addContainerGap(13, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -608,7 +631,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addComponent(submit_circles_ui)
                         .addGap(25, 25, 25))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap(14, Short.MAX_VALUE)
                         .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, 149, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(add_circle_ui)
@@ -631,11 +654,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
         tabbed_panel.addTab("TIRF", jPanel1);
 
         point_shoot_button.setText("Point and shoot");
-        point_shoot_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                point_shoot_buttonActionPerformed(evt);
-            }
-        });
 
         jLabel1.setText("Turn off light after:");
 
@@ -714,7 +732,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                                         .addComponent(jLabel1)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, 55, Short.MAX_VALUE)))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, 53, Short.MAX_VALUE)))
                                 .addComponent(jLabel7)))
                         .addGap(53, 53, 53))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
@@ -745,7 +763,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addComponent(jSpinner3, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jLabel14)
-                        .addContainerGap(66, Short.MAX_VALUE))))
+                        .addContainerGap(65, Short.MAX_VALUE))))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -793,12 +811,134 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addComponent(point_shoot_button)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addGap(0, 45, Short.MAX_VALUE)
+                .addGap(0, 100, Short.MAX_VALUE)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(35, 35, 35))
         );
 
         tabbed_panel.addTab("FRAP", jPanel3);
+
+        jLabel36.setText("Photoactivation timing");
+
+        pa_table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "start frame", "end frame", "x position", "y position"
+            }
+        ));
+        jScrollPane3.setViewportView(pa_table);
+
+        add_pa_row_ui.setText("Add");
+        add_pa_row_ui.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                add_pa_row_uiActionPerformed(evt);
+            }
+        });
+
+        remove_pa_row_ui.setText("Remove");
+        remove_pa_row_ui.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                remove_pa_row_uiActionPerformed(evt);
+            }
+        });
+
+        jLabel37.setText("Take extra ");
+
+        jLabel38.setText("frames");
+
+        property_table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Property", "when plain image", "when photoactivation"
+            }
+        ));
+        jScrollPane4.setViewportView(property_table);
+
+        start_pa_ui.setText("Start now");
+        start_pa_ui.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                start_pa_uiActionPerformed(evt);
+            }
+        });
+
+        add_property_ui.setText("Add");
+        add_property_ui.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                add_property_uiActionPerformed(evt);
+            }
+        });
+
+        remove_property_ui.setText("Remove");
+
+        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+        jPanel6.setLayout(jPanel6Layout);
+        jPanel6Layout.setHorizontalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jSeparator3)
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 399, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(add_pa_row_ui, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(remove_pa_row_ui, javax.swing.GroupLayout.DEFAULT_SIZE, 85, Short.MAX_VALUE)))
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel36)
+                            .addGroup(jPanel6Layout.createSequentialGroup()
+                                .addComponent(jLabel37)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jSpinner5, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jLabel38)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 401, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(add_property_ui, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(remove_property_ui, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(start_pa_ui, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel6Layout.setVerticalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel36)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addComponent(add_pa_row_ui)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(remove_pa_row_ui)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel37)
+                    .addComponent(jSpinner5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel38))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addComponent(add_property_ui)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(remove_property_ui)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(start_pa_ui)
+                .addContainerGap(50, Short.MAX_VALUE))
+        );
+
+        tabbed_panel.addTab("PhotoActivation", jPanel6);
 
         jPanel7.setBorder(javax.swing.BorderFactory.createTitledBorder("Setup"));
 
@@ -905,7 +1045,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(dev_name_ui, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(calibrate_ui))
-                .addContainerGap(178, Short.MAX_VALUE))
+                .addContainerGap(175, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -918,7 +1058,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(calibrate_ui)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 74, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 129, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(reset_daq_ui)
                     .addComponent(jLabel27)
@@ -956,8 +1096,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(tirf_calibration_sign)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(tirf_calibration_sign)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -972,50 +1111,303 @@ public class MirrorControlForm extends javax.swing.JFrame {
                     .addComponent(jLabel16)
                     .addComponent(photobleaching_calibration_sign))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(tabbed_panel, javax.swing.GroupLayout.PREFERRED_SIZE, 291, Short.MAX_VALUE)
+                .addComponent(tabbed_panel)
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void tabbed_panelStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabbed_panelStateChanged
+        update_cur_mode_based_on_tab();
+    }//GEN-LAST:event_tabbed_panelStateChanged
 
-    private Point2D.Double transformPoint(Map<Polygon, AffineTransform> mapping, Point2D.Double pt) {
-        Set<Polygon> set = mapping.keySet();
-        // First find out if the given point is inside a cell, and if so,
-        // transform it with that cell's AffineTransform.
+    private void calibrate_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_calibrate_uiActionPerformed
 
-        for (Polygon poly : set) {
-            if (poly.contains(pt)) {
-                return (Point2D.Double) mapping.get(poly).transform(pt, null);
-            }
-        }
+        boolean daq_running = is_daq_running.get();
+        boolean calibrate_pressed = calibrate_ui.isSelected();
 
-        // The point isn't inside any cell, so use the global mapping
-        return (Point2D.Double) cur_mode.first_mapping.transform(pt, null);
+        if (daq_running && calibrate_pressed) {
+            JOptionPane.showMessageDialog(null,
+                "The DAQ boad is being used by other program.");
+            calibrate_ui.setSelected(false);
+        } else if (daq_running && !calibrate_pressed) {
+            stop_calibration();
+            calibrate_ui.setText("Calibrate Now!");
+        } else if (!daq_running && calibrate_pressed) {
+            run_calibration();
+            calibrate_ui.setText("Stop Calibration");
+        } else {}
 
-        // The point isn't inside any cell, so search for the closest cell
-        // and use the AffineTransform from that.
+    }//GEN-LAST:event_calibrate_uiActionPerformed
+
+    private void reset_daq_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reset_daq_uiActionPerformed
+
+        // Get the device name from current mode
+        String dev_name = dev_name_ui.getText();
+        reset_daq(dev_name);
+
         /*
-         double minDistance = Double.MAX_VALUE;
-         Polygon bestPoly = null;
-         for (Polygon poly : set) {
-         double distance = meanPosition2D(getVertices(poly)).distance(pt.x, pt.y);
-         if (minDistance > distance) {
-         bestPoly = poly;
-         minDistance = distance;
-         }
-         }
-         if (bestPoly == null) {
-         throw new RuntimeException("Unable to map point to device.");
-         }
-         return (Point2D.Double) mapping.get(bestPoly).transform(pt, null);
-         */
-    }
+        // TODO Find a way to loop through all modes without hard-coded index
+        Point2D.Double zero_v = new Point2D.Double(0, 0);
+        //cur_mode = mode_map.get(mode_str_array.get(1));
+        //displaySpot(0, 0);
+        //cur_mode = mode_map.get(mode_str_array.get(0));
+        final boolean liveModeRunning = app_.isLiveModeOn();
+        app_.enableLiveMode(false);
+        Point p = measureSpotOnCamera(zero_v, false);
+
+        zero_v_x = p.x;
+        zero_v_y = p.y;
+
+        app_.enableLiveMode(liveModeRunning);
+        */
+    }//GEN-LAST:event_reset_daq_uiActionPerformed
+
+    private void roi_manager_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_roi_manager_uiActionPerformed
+        DualAxisMirrorPlugin.showRoiManager();
+
+    }//GEN-LAST:event_roi_manager_uiActionPerformed
+
+    /*    */
+    
+    private void submit_circles_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_submit_circles_uiActionPerformed
+
+        if (!is_calibration_there())
+        return;
+
+        boolean daq_running = is_daq_running.get();
+        boolean submit_pressed = submit_circles_ui.isSelected();
+
+        if (daq_running && submit_pressed) {
+            JOptionPane.showMessageDialog(null,
+                "The DAQ boad is being used by other program.");
+            submit_circles_ui.setSelected(false);
+        } else if (daq_running && !submit_pressed) {
+            stop_submit_circles();
+            submit_circles_ui.setText("Submit Circles");
+        } else if (!daq_running && submit_pressed) {
+            start_submit_circles();
+            submit_circles_ui.setText("Cancel");
+        } else {}
+    }//GEN-LAST:event_submit_circles_uiActionPerformed
+
+    private void save_circle_maps_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_save_circle_maps_uiActionPerformed
+
+        Thread th = new Thread("Projector calibration thread") {
+            @Override
+            public void run() {
+                final boolean liveModeRunning = app_.isLiveModeOn();
+                app_.enableLiveMode(false);
+
+                String old_cam = core_.getCameraDevice();
+                try {
+                    core_.setCameraDevice(camera_name_ui1.getSelectedItem().toString());
+                } catch (Exception ex) {
+                    Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                final List<String> all_volts = new ArrayList<String>();
+                for (int i=0; i < tirf_loops_model.size(); ++i) {
+                    all_volts.addAll(((TIRFCircle)(tirf_loops_model.get(i))).volts);
+                }
+
+                short max_image[] = null;
+
+                try {
+                    core_.snapImage();
+                    TaggedImage timg = core_.getTaggedImage();
+                    max_image = (short[]) timg.pix;
+                } catch (Exception ex) {
+                    Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                // Compare to max_image and save the maximum value for each pixel
+                String prefix = "tirf_map_";
+                for (int i = 0, cnt = 0; i < all_volts.size(); i += 2, cnt++) {
+                    Util.set_voltage(cur_mode.daq_dev_str,
+                        Double.valueOf(all_volts.get(i)),
+                        Double.valueOf(all_volts.get(i + 1)));
+                    try {
+                        core_.snapImage();
+                        TaggedImage timg = core_.getTaggedImage();
+                        app_.displayImage(timg);
+
+                        //short image[] = (short[]) core_.getImage();
+                        short image[] = (short[]) timg.pix;
+
+                        ImageProcessor ip = ImageUtils.makeProcessor(core_, image);
+                        ImagePlus imgp = new ImagePlus("", ip);
+                        FileSaver fs = new FileSaver(imgp);
+                        fs.saveAsTiff(".\\"+prefix+String.format("%04d", cnt)+".tiff");
+                            /*
+                            for (int q = 0; q < image.length; q++) {
+                                if (image[q] > max_image[q]) {
+                                    max_image[q] = image[q];
+                                }
+                            }
+                            */
+                        } catch (Exception ex) {
+                            Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+
+                    JOptionPane.showMessageDialog(null
+                        , "Supercomposed image has been saved.");
+                    app_.enableLiveMode(liveModeRunning);
+
+                    try {
+                        core_.setCameraDevice(old_cam);
+                    } catch (Exception ex) {
+                        Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            };
+            th.start();
+
+    }//GEN-LAST:event_save_circle_maps_uiActionPerformed
+
+    
+    private void add_circle_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_add_circle_uiActionPerformed
+
+        TIRFCircle tc = new TIRFCircle();
+
+        List<Double> circle_px = create_circle_dots((Integer)center_input_x_ui.getValue(),
+            (Integer)center_input_y_ui.getValue());
+        if (circle_px == null)
+        return;
+
+        
+        List<String> transformed_points = new ArrayList<String>();
+        
+        for (int i = 0; i < circle_px.size() - 1; i += 2) {
+            Point2D.Double p = new Point2D.Double(circle_px.get(i), circle_px.get(i + 1));
+            Point2D.Double trans_p = Util.transformPoint(cur_mode.poly_mapping, p);
+
+            String x = String.format("%.1f", (Double)trans_p.x);
+            String y = String.format("%.1f", (Double)trans_p.y);
+            
+            transformed_points.add(x);
+            transformed_points.add(y);
+
+            
+        }
+        
+        
+        tc.volts = transformed_points;
+        tc.radius_um = (Integer)circle_radius_ui.getValue();
+        tc.circle_frequency = (Double)circle_frequency_ui.getValue();
+        tc.center_x = (Integer)center_input_x_ui.getValue();
+        tc.center_y = (Integer)center_input_y_ui.getValue();
+
+        tirf_loops_model.addElement(tc);
+    }//GEN-LAST:event_add_circle_uiActionPerformed
+
+    private void move_circle_down_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_move_circle_down_uiActionPerformed
+        int selected = tirf_loops_ui.getSelectedIndex();
+        if (selected == -1 || selected == tirf_loops_model.size()-1)
+        return;
+        Object selected_item = (TIRFCircle) tirf_loops_model.get(selected);
+        Object next_item = (TIRFCircle) tirf_loops_model.get(selected+1);
+
+        tirf_loops_model.set(selected, next_item);
+        tirf_loops_model.set(selected+1, selected_item);
+
+        tirf_loops_ui.setSelectedIndex(selected+1);
+    }//GEN-LAST:event_move_circle_down_uiActionPerformed
+
+    private void move_circle_up_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_move_circle_up_uiActionPerformed
+        int selected = tirf_loops_ui.getSelectedIndex();
+        if (selected == -1 || selected == 0)
+        return;
+        Object selected_item = (TIRFCircle) tirf_loops_model.get(selected);
+        Object pre_item = (TIRFCircle) tirf_loops_model.get(selected-1);
+
+        tirf_loops_model.set(selected, pre_item);
+        tirf_loops_model.set(selected-1, selected_item);
+
+        tirf_loops_ui.setSelectedIndex(selected-1);
+    }//GEN-LAST:event_move_circle_up_uiActionPerformed
+
+    private void remove_circle_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_remove_circle_uiActionPerformed
+        int selected = tirf_loops_ui.getSelectedIndex();
+        if (selected == -1)
+        return;
+        tirf_loops_model.remove(selected);
+    }//GEN-LAST:event_remove_circle_uiActionPerformed
+
+    private void freerun_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_freerun_uiActionPerformed
+
+        
+        if (!is_calibration_there())
+            return;
+        
+        
+        boolean daq_running = is_daq_running.get();
+        boolean freerun_pressed = freerun_ui.isSelected();
+
+        if (daq_running && freerun_pressed) {
+            JOptionPane.showMessageDialog(null,
+                "The DAQ boad is being used by other program.");
+            freerun_ui.setSelected(false);
+        } else if (daq_running && !freerun_pressed) {
+            stop_freerun();
+            freerun_ui.setText("Free Run");
+        } else if (!daq_running && freerun_pressed) {
+            start_freerun();
+            freerun_ui.setText("Cancel");
+        } else {}
+    }//GEN-LAST:event_freerun_uiActionPerformed
+
+    private void remove_pa_row_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_remove_pa_row_uiActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_remove_pa_row_uiActionPerformed
+
+    private void start_pa_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_start_pa_uiActionPerformed
+        
+    }//GEN-LAST:event_start_pa_uiActionPerformed
+
+    private void add_pa_row_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_add_pa_row_uiActionPerformed
+        DefaultTableModel model = (DefaultTableModel) pa_table.getModel();
+        model.addRow(new Object[]{"0", "0", "0", "0"});
+    }//GEN-LAST:event_add_pa_row_uiActionPerformed
+
+    private void add_property_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_add_property_uiActionPerformed
+        DefaultTableModel model = (DefaultTableModel) property_table.getModel();
+        model.addRow(new Object[]{"pick a property", "", ""});
+        
+        JComboBox property_combo = new JComboBox();
+        JComboBox property_value_combo_no_pa = new JComboBox();
+        JComboBox property_value_combo_pa = new JComboBox();
+        
+        ArrayList<String> dev_prop_list = new ArrayList<String>();
+        StrVector devices = core_.getLoadedDevices();
+        for (int i =0; i < devices.size(); i++) {
+            try {
+                StrVector dev_prop = core_.getDevicePropertyNames(devices.get(i));
+                for (int j=0; j <dev_prop.size(); j++) {
+                    String combination = devices.get(i) + "-" + dev_prop.get(j);
+                    dev_prop_list.add(combination);
+                }
+                 
+            } catch (Exception ex) {
+                Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+        }
+        property_combo.setModel(new DefaultComboBoxModel(dev_prop_list.toArray())); 
+             
+        TableColumn property_column = property_table.getColumnModel().getColumn(0);
+        property_column.setCellEditor(new DefaultCellEditor(property_combo));
+    }//GEN-LAST:event_add_property_uiActionPerformed
+
+
+    
 
     private Preferences getCalibrationNode() {
         try {
             Preferences p = Preferences.userNodeForPackage(DualAxisMirrorPlugin.class)
+            //Preferences p = Preferences.systemNodeForPackage(DualAxisMirrorPlugin.class)
                     .node("calibration");
                     
             p.flush();
@@ -1028,47 +1420,35 @@ public class MirrorControlForm extends javax.swing.JFrame {
         return null;
     }
 
-//    private void run_external_program(String prog_name, List<String> args, boolean will_done) {
-//        try {
-//            String app = System.getProperty("user.dir")
-//                    + File.separator + "mmplugins" + File.separator
-//                    + prog_name;
-//
-//            args.add(0, app);
-//
-//            ProcessBuilder pb = new ProcessBuilder(args);
-//            daq_proc = pb.start();
-//            
-//            if (will_done) {
-//                daq_proc.waitFor();
-//                daq_proc.destroy();
-//            }
-//        } catch (IOException ex) {
-//            Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
-//        } catch (InterruptedException ex) {
-//            Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//    }
+    private Process run_external_program(String prog_name, List<String> args, boolean will_done) {
+        try {
+            String app = System.getProperty("user.dir")
+                    + File.separator + "mmplugins" + File.separator
+                    + prog_name;
+
+            args.add(0, app);
+
+            ProcessBuilder pb = new ProcessBuilder(args);
+            daq_proc = pb.start();
+            
+            if (will_done) {
+                daq_proc.waitFor();
+                daq_proc.destroy();
+            }
+            
+            
+        } catch (IOException ex) {
+            Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return daq_proc;
+    }
 
     private void saveToDisk(ExpMode mode) {
         Preferences p = getCalibrationNode();
         JavaUtils.putObjectInPrefs(p, mode.mode_name, mode);
     }
-
-    private void point_shoot_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_point_shoot_buttonActionPerformed
-
-        double x = Double.parseDouble(point_shoot_x.getText());
-        double y = Double.parseDouble(point_shoot_y.getText());
-
-        Point2D.Double img_pos = new Point2D.Double(x, y);
-
-        Point2D.Double volts = transformPoint(cur_mode.poly_mapping, img_pos);
-
-        // TODO REMOVE THIS LINE!!!!!
-        cur_mode = mode_map.get(mode_str_array.get(0));
-
-        Util.set_voltage(cur_mode.daq_dev_str, volts.x, volts.y);
-    }//GEN-LAST:event_point_shoot_buttonActionPerformed
 
     private void update_cur_mode_based_on_tab() {
         int tab_ind = tabbed_panel.getSelectedIndex();
@@ -1076,10 +1456,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
             cur_mode = mode_map.get(mode_str_array.get(tab_ind));
         }
     }
-    private void tabbed_panelStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabbed_panelStateChanged
-        update_cur_mode_based_on_tab();
-    }//GEN-LAST:event_tabbed_panelStateChanged
-
     private boolean is_calibration_there() {
         if (cur_mode.poly_mapping == null) {
             JOptionPane.showMessageDialog(null, "No Calibration Data");
@@ -1089,9 +1465,11 @@ public class MirrorControlForm extends javax.swing.JFrame {
     }
     
     private List<Double> create_circle_dots(int center_x, int center_y) {
+        
         if (!is_calibration_there()) {
             return null;
         }
+        
         List<Double> ret = new ArrayList<Double>();
 
         int num_dots = (Integer)circle_samples_ui.getValue();
@@ -1132,141 +1510,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
         }
     }
          
-    private void reset_daq_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reset_daq_uiActionPerformed
-
-        // Get the device name from current mode
-        String dev_name = dev_name_ui.getText();
-        reset_daq(dev_name);
         
-        /*
-        // TODO Find a way to loop through all modes without hard-coded index
-        Point2D.Double zero_v = new Point2D.Double(0, 0);
-        //cur_mode = mode_map.get(mode_str_array.get(1));
-        //displaySpot(0, 0);
-        //cur_mode = mode_map.get(mode_str_array.get(0));
-        final boolean liveModeRunning = app_.isLiveModeOn();
-        app_.enableLiveMode(false);
-        Point p = measureSpotOnCamera(zero_v, false);
-        
-        zero_v_x = p.x;
-        zero_v_y = p.y;
-        
-        app_.enableLiveMode(liveModeRunning);
-        */
-    }//GEN-LAST:event_reset_daq_uiActionPerformed
-
-    private void add_circle_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_add_circle_uiActionPerformed
-       
-        TIRFCircle tc = new TIRFCircle();
-        
-        List<Double> circle_px = create_circle_dots((Integer)center_input_x_ui.getValue(),
-                                                    (Integer)center_input_y_ui.getValue());
-        if (circle_px == null)
-            return;
-        
-        List<String> transformed_points = new ArrayList<String>();
-        for (int i = 0; i < circle_px.size() - 1; i += 2) {
-            Point2D.Double p = new Point2D.Double(circle_px.get(i), circle_px.get(i + 1));
-            Point2D.Double trans_p = transformPoint(cur_mode.poly_mapping, p);
-            
-            transformed_points.add(String.valueOf(trans_p.x));
-            transformed_points.add(String.valueOf(trans_p.y));
-            
-            //String x = String.format("%.1f", (Double)trans_p.x);
-            //String y = String.format("%.1f", (Double)trans_p.y);            
-        }
-        
-        tc.volts = transformed_points;
-        tc.radius_um = (Integer)circle_radius_ui.getValue();
-        tc.circle_frequency = (Double)circle_frequency_ui.getValue();
-        tc.center_x = (Integer)center_input_x_ui.getValue();
-        tc.center_y = (Integer)center_input_y_ui.getValue();
-        
-        tirf_loops_model.addElement(tc);
-    }//GEN-LAST:event_add_circle_uiActionPerformed
-
-    
-    private void save_circle_maps_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_save_circle_maps_uiActionPerformed
-     
-        Thread th = new Thread("Projector calibration thread") {
-            @Override
-            public void run() {
-                final boolean liveModeRunning = app_.isLiveModeOn();
-                app_.enableLiveMode(false);
-                
-                String old_cam = core_.getCameraDevice();
-                try {
-                    core_.setCameraDevice(camera_name_ui1.getSelectedItem().toString());
-                } catch (Exception ex) {
-                    Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                
-                final List<String> all_volts = new ArrayList<String>();
-                for (int i=0; i < tirf_loops_model.size(); ++i) {
-                    all_volts.addAll(((TIRFCircle)(tirf_loops_model.get(i))).volts);
-                }
-                
-                short max_image[] = null;
-                
-                try {
-                    core_.snapImage();
-                    TaggedImage timg = core_.getTaggedImage();
-                    max_image = (short[]) timg.pix;                
-                } catch (Exception ex) {
-                    Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
-                }
-
-                // Compare to max_image and save the maximum value for each pixel
-                String prefix = "tirf_map_";
-                for (int i = 0, cnt = 0; i < all_volts.size(); i += 2, cnt++) {    
-                    Util.set_voltage(cur_mode.daq_dev_str,
-                            Double.valueOf(all_volts.get(i)),
-                            Double.valueOf(all_volts.get(i + 1)));
-                    try {
-                        core_.snapImage();
-                        TaggedImage timg = core_.getTaggedImage();
-                        app_.displayImage(timg);
-                        
-                        //short image[] = (short[]) core_.getImage();
-                        short image[] = (short[]) timg.pix;
-                        
-                        ImageProcessor ip = ImageUtils.makeProcessor(core_, image);
-                        ImagePlus imgp = new ImagePlus("", ip);
-                        FileSaver fs = new FileSaver(imgp);
-                        fs.saveAsTiff(".\\"+prefix+String.format("%04d", cnt)+".tiff");
-                        /*
-                        for (int q = 0; q < image.length; q++) {
-                            if (image[q] > max_image[q]) {
-                                max_image[q] = image[q];
-                            }
-                        }
-                        */
-                    } catch (Exception ex) {
-                        Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                              
-                
-                JOptionPane.showMessageDialog(null
-                        , "Supercomposed image has been saved.");
-                app_.enableLiveMode(liveModeRunning);
-                
-                try {
-                    core_.setCameraDevice(old_cam);
-                } catch (Exception ex) {
-                    Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        };
-        th.start();
-        
-    }//GEN-LAST:event_save_circle_maps_uiActionPerformed
-
-    private void roi_manager_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_roi_manager_uiActionPerformed
-        DualAxisMirrorPlugin.showRoiManager();
-        
-    }//GEN-LAST:event_roi_manager_uiActionPerformed
-    
     private void stop_freerun() {
         stop_daq_proc();
         is_daq_running.set(false);
@@ -1279,17 +1523,23 @@ public class MirrorControlForm extends javax.swing.JFrame {
         
         final List<String> transformed_points = new ArrayList<String>();
 
+        
         for (int i = 0; i < combined.size() - 1; i += 2) {
             Point2D.Double p = new Point2D.Double(combined.get(i), combined.get(i + 1));
-            Point2D.Double trans_p = transformPoint(cur_mode.poly_mapping, p);
+            Point2D.Double trans_p = Util.transformPoint(cur_mode.poly_mapping, p);
 
-            transformed_points.add(String.valueOf(trans_p.x));
-            transformed_points.add(String.valueOf(trans_p.y));
+            Double truncated_x = BigDecimal.valueOf(trans_p.x)
+                    .setScale(1, RoundingMode.HALF_UP).doubleValue();
+            Double truncated_y = BigDecimal.valueOf(trans_p.y)
+                    .setScale(1, RoundingMode.HALF_UP).doubleValue();
+            
+            transformed_points.add(String.valueOf(truncated_x));
+            transformed_points.add(String.valueOf(truncated_y));
             
             //transformed_points.add(String.valueOf(i));
             //transformed_points.add(String.valueOf(i+1));
         }
-
+        
         int sampling_rate = (int) ((Integer) circle_samples_ui.getValue()
                 * (Double) circle_frequency_ui.getValue());
 
@@ -1309,8 +1559,8 @@ public class MirrorControlForm extends javax.swing.JFrame {
         Thread th = new Thread("Freerun thread") {
             @Override
             public void run() {     
-                    daq_proc = Util.run_external_program(
-                            Util.plugin_path() + "freerun.exe",
+                    run_external_program(
+                            "freerun.exe",
                             transformed_points,
                             false);
             }
@@ -1318,27 +1568,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
         th.start();
     }
     
-    private void freerun_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_freerun_uiActionPerformed
-             
-        if (!is_calibration_there())
-            return;
-        
-        boolean daq_running = is_daq_running.get();
-        boolean freerun_pressed = freerun_ui.isSelected();
-        
-        if (daq_running && freerun_pressed) {
-            JOptionPane.showMessageDialog(null,
-                    "The DAQ boad is being used by other program.");
-            freerun_ui.setSelected(false);
-        } else if (daq_running && !freerun_pressed) {
-            stop_freerun();           
-            freerun_ui.setText("Free Run");
-        } else if (!daq_running && freerun_pressed) {            
-            start_freerun();            
-            freerun_ui.setText("Cancel");
-        } else {}
-    }//GEN-LAST:event_freerun_uiActionPerformed
-
     public void stop_calibration()
     {
         Util.is_stop_requested.set(true);
@@ -1433,25 +1662,6 @@ public class MirrorControlForm extends javax.swing.JFrame {
         calibrate_thread.start();
     }
     
-    private void calibrate_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_calibrate_uiActionPerformed
-        
-            boolean daq_running = is_daq_running.get();
-            boolean calibrate_pressed = calibrate_ui.isSelected();
-            
-            if (daq_running && calibrate_pressed) {
-                JOptionPane.showMessageDialog(null,
-                    "The DAQ boad is being used by other program.");
-                calibrate_ui.setSelected(false);
-            } else if (daq_running && !calibrate_pressed) {
-                stop_calibration();
-                calibrate_ui.setText("Calibrate Now!");
-            } else if (!daq_running && calibrate_pressed) {
-                run_calibration();
-                calibrate_ui.setText("Stop Calibration");
-            } else {}
-        
-    }//GEN-LAST:event_calibrate_uiActionPerformed
-
     private void stop_submit_circles() {
         stop_daq_proc();
         is_daq_running.set(false);
@@ -1480,68 +1690,14 @@ public class MirrorControlForm extends javax.swing.JFrame {
         Thread th = new Thread("Submit circles thread") {
             @Override
             public void run() {
-                Util.run_external_program(
-                        Util.plugin_path() + "ao_patterns_triggered.exe",
+                run_external_program(
+                        "ao_patterns_triggered.exe",
                         args, false);
             }
         };
         th.start();
     }
-    
-    private void submit_circles_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_submit_circles_uiActionPerformed
-    
-        if (!is_calibration_there())
-            return;
-             
-        boolean daq_running = is_daq_running.get();
-        boolean submit_pressed = submit_circles_ui.isSelected();
-        
-        if (daq_running && submit_pressed) {
-            JOptionPane.showMessageDialog(null,
-                    "The DAQ boad is being used by other program.");
-            submit_circles_ui.setSelected(false);
-        } else if (daq_running && !submit_pressed) {
-            stop_submit_circles();           
-            submit_circles_ui.setText("Submit Circles");
-        } else if (!daq_running && submit_pressed) {            
-            start_submit_circles();            
-            submit_circles_ui.setText("Cancel");
-        } else {}
-    }//GEN-LAST:event_submit_circles_uiActionPerformed
-
-    private void remove_circle_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_remove_circle_uiActionPerformed
-        int selected = tirf_loops_ui.getSelectedIndex();
-        if (selected == -1)
-            return;
-        tirf_loops_model.remove(selected);
-    }//GEN-LAST:event_remove_circle_uiActionPerformed
-
-    private void move_circle_up_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_move_circle_up_uiActionPerformed
-        int selected = tirf_loops_ui.getSelectedIndex();
-        if (selected == -1 || selected == 0)
-            return;
-        Object selected_item = (TIRFCircle) tirf_loops_model.get(selected);
-        Object pre_item = (TIRFCircle) tirf_loops_model.get(selected-1);
-        
-        tirf_loops_model.set(selected, pre_item);
-        tirf_loops_model.set(selected-1, selected_item);
-        
-        tirf_loops_ui.setSelectedIndex(selected-1);
-    }//GEN-LAST:event_move_circle_up_uiActionPerformed
-
-    private void move_circle_down_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_move_circle_down_uiActionPerformed
-        int selected = tirf_loops_ui.getSelectedIndex();
-        if (selected == -1 || selected == tirf_loops_model.size()-1)
-            return;
-        Object selected_item = (TIRFCircle) tirf_loops_model.get(selected);
-        Object next_item = (TIRFCircle) tirf_loops_model.get(selected+1);
-        
-        tirf_loops_model.set(selected, next_item);
-        tirf_loops_model.set(selected+1, selected_item);
-        
-        tirf_loops_ui.setSelectedIndex(selected+1);
-    }//GEN-LAST:event_move_circle_down_uiActionPerformed
-    /**
+        /**
      * @param args the command line arguments
      */
 //    public static void main(String args[]) {
@@ -1577,6 +1733,8 @@ public class MirrorControlForm extends javax.swing.JFrame {
 //    }                    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton add_circle_ui;
+    private javax.swing.JButton add_pa_row_ui;
+    private javax.swing.JButton add_property_ui;
     private javax.swing.JToggleButton calibrate_ui;
     private javax.swing.JComboBox camera_name_ui;
     private javax.swing.JComboBox camera_name_ui1;
@@ -1618,6 +1776,9 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel33;
     private javax.swing.JLabel jLabel34;
     private javax.swing.JLabel jLabel35;
+    private javax.swing.JLabel jLabel36;
+    private javax.swing.JLabel jLabel37;
+    private javax.swing.JLabel jLabel38;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
@@ -1629,27 +1790,37 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator3;
     private javax.swing.JSpinner jSpinner1;
     private javax.swing.JSpinner jSpinner2;
     private javax.swing.JSpinner jSpinner3;
+    private javax.swing.JSpinner jSpinner5;
     private javax.swing.JTable jTable1;
     private javax.swing.JComboBox light_mode_drop;
     private javax.swing.JButton move_circle_down_ui;
     private javax.swing.JButton move_circle_up_ui;
     private javax.swing.JLabel original_center_x_ui;
     private javax.swing.JLabel original_center_y_ui;
+    private javax.swing.JTable pa_table;
     private javax.swing.JLabel photobleaching_calibration_sign;
     private javax.swing.JButton point_shoot_button;
     private javax.swing.JTextField point_shoot_x;
     private javax.swing.JTextField point_shoot_y;
+    private javax.swing.JTable property_table;
     private javax.swing.JButton remove_circle_ui;
+    private javax.swing.JButton remove_pa_row_ui;
+    private javax.swing.JButton remove_property_ui;
     private javax.swing.JButton reset_daq_ui;
     private javax.swing.JButton roi_manager_ui;
     private javax.swing.JButton save_circle_maps_ui;
+    private javax.swing.JButton start_pa_ui;
     private javax.swing.JToggleButton submit_circles_ui;
     private javax.swing.JTabbedPane tabbed_panel;
     private javax.swing.JLabel tirf_calibration_sign;

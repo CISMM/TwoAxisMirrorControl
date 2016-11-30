@@ -32,6 +32,7 @@ public class DualAxisMirrorPlugin implements org.micromanager.api.MMPlugin {
     private ScriptInterface app_;
     private CMMCore core_;
    
+    //private MainFrame frame_= null;
     private MirrorControlForm frame_= null;
     
     private final String package_path = "/cismm/NI_daq_bin/";
@@ -127,9 +128,12 @@ public class DualAxisMirrorPlugin implements org.micromanager.api.MMPlugin {
 
     @Override
     public void show() {
+      
+        
+        //System.out.println(crc_byte.toString());
         if (frame_ == null) {
-            frame_ = new MirrorControlForm(core_, app_, daq_bin_list);
-            
+            //frame_ = new MainFrame(core_, app_); 
+            frame_ = new MirrorControlForm(core_, app_, daq_bin_list); 
         }
         else {
          //frame_.setPlugin(this);
