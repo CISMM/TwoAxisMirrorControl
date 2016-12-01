@@ -42,6 +42,8 @@ import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
 import cismm.Util;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /*
  * To change this template, choose Tools | Templates
@@ -595,7 +597,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(submit_circles_ui))))
-                .addContainerGap(16, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -714,7 +716,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                                         .addComponent(jLabel1)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, 55, Short.MAX_VALUE)))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, 52, Short.MAX_VALUE)))
                                 .addComponent(jLabel7)))
                         .addGap(53, 53, 53))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
@@ -745,7 +747,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addComponent(jSpinner3, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jLabel14)
-                        .addContainerGap(66, Short.MAX_VALUE))))
+                        .addContainerGap(63, Short.MAX_VALUE))))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -793,7 +795,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addComponent(point_shoot_button)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addGap(0, 45, Short.MAX_VALUE)
+                .addGap(0, 48, Short.MAX_VALUE)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(35, 35, 35))
         );
@@ -905,7 +907,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(dev_name_ui, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(calibrate_ui))
-                .addContainerGap(178, Short.MAX_VALUE))
+                .addContainerGap(172, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -918,7 +920,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(calibrate_ui)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 74, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 77, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(reset_daq_ui)
                     .addComponent(jLabel27)
@@ -947,17 +949,18 @@ public class MirrorControlForm extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(tabbed_panel)
+                    .addComponent(tabbed_panel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel16)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(photobleaching_calibration_sign)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(tirf_calibration_sign)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel16)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(photobleaching_calibration_sign))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel4)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(tirf_calibration_sign)))
+                        .addGap(0, 408, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -972,7 +975,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                     .addComponent(jLabel16)
                     .addComponent(photobleaching_calibration_sign))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(tabbed_panel, javax.swing.GroupLayout.PREFERRED_SIZE, 291, Short.MAX_VALUE)
+                .addComponent(tabbed_panel, javax.swing.GroupLayout.PREFERRED_SIZE, 294, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1088,7 +1091,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
         return true;
     }
     
-    private List<Double> create_circle_dots(int center_x, int center_y) {
+    private List<Double> create_circle_dots(int center_x, int center_y) {   
         if (!is_calibration_there()) {
             return null;
         }
@@ -1169,13 +1172,21 @@ public class MirrorControlForm extends javax.swing.JFrame {
             Point2D.Double p = new Point2D.Double(circle_px.get(i), circle_px.get(i + 1));
             Point2D.Double trans_p = transformPoint(cur_mode.poly_mapping, p);
             
-            transformed_points.add(String.valueOf(trans_p.x));
-            transformed_points.add(String.valueOf(trans_p.y));
+            Double truncated_x = BigDecimal.valueOf(trans_p.x)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
+            Double truncated_y = BigDecimal.valueOf(trans_p.y)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
             
             //String x = String.format("%.1f", (Double)trans_p.x);
-            //String y = String.format("%.1f", (Double)trans_p.y);            
+            //String y = String.format("%.1f", (Double)trans_p.y);
+            
+            transformed_points.add(String.valueOf(truncated_x));
+            transformed_points.add(String.valueOf(truncated_y));          
         }
         
+        //debug_text.setText(transformed_points.toString());
         tc.volts = transformed_points;
         tc.radius_um = (Integer)circle_radius_ui.getValue();
         tc.circle_frequency = (Double)circle_frequency_ui.getValue();
@@ -1343,6 +1354,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
     {
         Util.is_stop_requested.set(true);
         is_daq_running.set(false);
+        stop_daq_proc();
     }
 
     public void run_calibration() 
@@ -1397,7 +1409,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                             core_,
                             app_,
                             cur_mode.daq_dev_str,
-                            cur_mode.first_mapping);
+                            first_mapping);
                     
                     boolean is_cancelled = (first_mapping == null) ||
                                            (poly_mapping  == null);
@@ -1427,6 +1439,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                     ReportingUtils.showError(e);          
                 } finally {
                     Util.is_stop_requested.set(false);
+                    stop_daq_proc();
                 }
             }
         };
@@ -1476,7 +1489,8 @@ public class MirrorControlForm extends javax.swing.JFrame {
         for (int i=0; i < tirf_loops_model.size(); ++i) {
                     args.addAll(((TIRFCircle)(tirf_loops_model.get(i))).volts);
         }
-        
+
+        //debug_text.setText(args.toString());
         Thread th = new Thread("Submit circles thread") {
             @Override
             public void run() {

@@ -39,6 +39,7 @@ public class Util {
     
     //protected static AtomicBoolean stop_requested = new AtomicBoolean(false);
     //protected static AtomicBoolean is_running = new AtomicBoolean(false);
+    static Process global_proc = null;
     public static AtomicBoolean is_stop_requested = new AtomicBoolean(false);
     
     public static String plugin_path() {
@@ -48,16 +49,16 @@ public class Util {
     }
     
     public static Process run_external_program(String prog, List<String> args, boolean wait_till_done) {
-        Process proc = null;
+        //Process proc = null;
         try {
             args.add(0, prog);
 
             ProcessBuilder pb = new ProcessBuilder(args);
-            proc = pb.start();
+            global_proc = pb.start();
             
             if (wait_till_done) {
-                proc.waitFor();
-                proc.destroy();
+                global_proc.waitFor();
+                global_proc.destroy();
             }
             
         } catch (IOException ex) {
@@ -65,7 +66,7 @@ public class Util {
         } catch (InterruptedException ex) {
             Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return proc;
+        return global_proc;
     }
     /**
      * Illuminate a spot at position x,y.
