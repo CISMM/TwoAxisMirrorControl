@@ -12,7 +12,6 @@ import java.awt.event.KeyEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -20,7 +19,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,6 +46,9 @@ import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+
+import java.io.File;
+import java.net.URLDecoder;
 
 /*
  * To change this template, choose Tools | Templates
@@ -214,7 +215,36 @@ public class MirrorControlForm extends javax.swing.JFrame {
             }
         }    
     }
-
+    
+    /*
+     * This section has functions that are meant to be called from exteranl
+     * programs.
+     */
+    public boolean point_to(int x, int y, String mode) {
+        ExpMode m = get_calibration(mode);
+        if (m == null)
+            return false;
+        
+        //Point2D.Double transformPoint(Map<Polygon, AffineTransform> mapping, Point2D.Double pt)
+        Point2D.Double volt = Util.transformPoint(m.poly_mapping, new Point2D.Double(x, y));
+        Util.set_voltage(m.daq_dev_str, volt.x, volt.y);
+        return true;
+    }
+    
+    public ExpMode get_calibration(String mode_str) {
+        Preferences prefs = getCalibrationNode();
+        if (prefs == null) {
+            return null;
+        }
+        ExpMode m = (ExpMode) JavaUtils.getObjectFromPrefs(prefs, mode_str, new ExpMode());
+            
+        if (m.first_mapping == null) {
+            return null;
+        }
+        return m;
+    }
+    
+    // ----------------------------------------------------------------------
     public MirrorControlForm(CMMCore core, ScriptInterface app, List<String> daq_bin_list) {
         //public MirrorControlForm(List<String> daq_bain_list) {
         initComponents();
@@ -254,6 +284,18 @@ public class MirrorControlForm extends javax.swing.JFrame {
         this.setTitle("DualAxisMirror Plugin - " + version_str);
        
         tirf_loops_ui.setModel(tirf_loops_model);
+        
+        //System.out.println(ClassLoader.getSystemClassLoader().getResource(".").getPath());
+        
+        //URL pa = MirrorControlForm.class.getResource("NI_daq_bin");
+            
+        //System.out.println(pa.toString().substring(1)+File.separator);
+        //System.out.println(ClassLoader.getSystemClassLoader().getResource(".").getPath());
+                
+        //URL exe = MirrorControlForm.class.getResource("NI_daq_bin/");
+        //System.out.println(exe.getPath());
+        //System.out.println(exe.getPath());
+        //File exefile = new File(exe.getPath());
     }
 
     /**
@@ -1422,21 +1464,26 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
     private Process run_external_program(String prog_name, List<String> args, boolean will_done) {
         try {
+            /*
+             * A sample string will be like:
+             * file:C:\Program Files\Micro-Manager-1.4\mmplugins\DualAxisMirror.jar!/
+             */
+            String path = MirrorControlForm.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+            String decodedPath = URLDecoder.decode(path, "UTF-8");
+            String nativeDir = decodedPath.substring(0, decodedPath.lastIndexOf(File.separator)).substring(5);
+            /*
             String app = System.getProperty("user.dir")
                     + File.separator + "mmplugins" + File.separator
                     + prog_name;
-
-            args.add(0, app);
-
+            */
+            args.add(0, nativeDir + File.separator + prog_name);          
             ProcessBuilder pb = new ProcessBuilder(args);
             daq_proc = pb.start();
             
             if (will_done) {
                 daq_proc.waitFor();
                 daq_proc.destroy();
-            }
-            
-            
+            }           
         } catch (IOException ex) {
             Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
         } catch (InterruptedException ex) {

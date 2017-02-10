@@ -19,6 +19,11 @@ import ij.plugin.filter.GaussianBlur;
 import ij.process.ImageProcessor;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -70,11 +75,58 @@ public class Util {
 //        }
 //        return proc;
 //    }
+    public static File getJarDir(Class aclass) {
+        URL url;
+        String extURL;      //  url.toExternalForm();
+
+        // get an url
+        try {
+            url = aclass.getProtectionDomain().getCodeSource().getLocation();
+              // url is in one of two forms
+              //        ./build/classes/   NetBeans test
+              //        jardir/JarName.jar  froma jar
+        } catch (SecurityException ex) {
+            url = aclass.getResource(aclass.getSimpleName() + ".class");
+            // url is in one of two forms, both ending "/com/physpics/tools/ui/PropNode.class"
+            //          file:/U:/Fred/java/Tools/UI/build/classes
+            //          jar:file:/U:/Fred/java/Tools/UI/dist/UI.jar!
+        }
+
+        // convert to external form
+        extURL = url.toExternalForm();
+
+        // prune for various cases
+        if (extURL.endsWith(".jar"))   // from getCodeSource
+            extURL = extURL.substring(0, extURL.lastIndexOf("/"));
+        else {  // from getResource
+            String suffix = "/"+(aclass.getName()).replace(".", "/")+".class";
+            extURL = extURL.replace(suffix, "");
+            if (extURL.startsWith("jar:") && extURL.endsWith(".jar!"))
+                extURL = extURL.substring(4, extURL.lastIndexOf("/"));
+        }
+
+        // convert back to url
+        try {
+            url = new URL(extURL);
+        } catch (MalformedURLException mux) {
+            // leave url unchanged; probably does not happen
+        }
+
+        // convert url to File
+        try {
+            return new File(url.toURI());
+        } catch(URISyntaxException ex) {
+            return new File(url.getPath());
+        }
+    }
     public static Process run_external_program(String prog, List<String> args) {
         Process proc = null;
         try {
-            args.add(0, prog);
-
+            String path = MirrorControlForm.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+            String decodedPath = URLDecoder.decode(path, "UTF-8");
+            String nativeDir = decodedPath.substring(0, decodedPath.lastIndexOf(File.separator)).substring(5);
+            
+            args.add(0, nativeDir + File.separator + prog);  
             ProcessBuilder pb = new ProcessBuilder(args);
             proc = pb.start();
         } catch (IOException ex) {
@@ -86,10 +138,13 @@ public class Util {
      * Illuminate a spot at position x,y.
      */
     public static void set_voltage(String daq_str, double x, double y) {
+        /*
         if (daq_str == null) {
             JOptionPane.showMessageDialog(null, "Calibration is required.");
             return;
         }
+        */
+        
         if (x >= NI.min_v_x && x <= (NI.v_range_x + NI.min_v_x)
          && y >= NI.min_v_y && y <= (NI.v_range_y + NI.min_v_y))
         {
