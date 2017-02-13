@@ -261,7 +261,8 @@ public class Util {
         try {
             return MathFunctions.generateAffineTransformFromPointPairs(p_to_v_map);
         } catch (Exception e) {
-            throw new RuntimeException("Spots aren't detected as expected. Is DMD in focus and roughly centered in camera's field of view?");
+            //throw new RuntimeException("Spots aren't detected as expected. Is DMD in focus and roughly centered in camera's field of view?");
+            throw new RuntimeException(e.getMessage());
         }
         
     }
