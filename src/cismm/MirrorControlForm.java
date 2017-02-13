@@ -39,7 +39,6 @@ import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
-import cismm.Util;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import javax.swing.DefaultCellEditor;
@@ -280,7 +279,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
         fill_mode_map();
         fill_camera_list();
         update_cur_mode_based_on_tab();
-        tabbed_panel.setEnabledAt(1, false);    
+        //tabbed_panel.setEnabledAt(1, false);    
         this.setTitle("DualAxisMirror Plugin - " + version_str);
        
         tirf_loops_ui.setModel(tirf_loops_model);
@@ -1462,21 +1461,9 @@ public class MirrorControlForm extends javax.swing.JFrame {
         return null;
     }
 
-    private Process run_external_program(String prog_name, List<String> args, boolean will_done) {
+    private Process run_daq_program(String prog_name, List<String> args, boolean will_done) {
         try {
-            /*
-             * A sample string will be like:
-             * file:C:\Program Files\Micro-Manager-1.4\mmplugins\DualAxisMirror.jar!/
-             */
-            String path = MirrorControlForm.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-            String decodedPath = URLDecoder.decode(path, "UTF-8");
-            String nativeDir = decodedPath.substring(0, decodedPath.lastIndexOf(File.separator)).substring(5);
-            /*
-            String app = System.getProperty("user.dir")
-                    + File.separator + "mmplugins" + File.separator
-                    + prog_name;
-            */
-            args.add(0, nativeDir + File.separator + prog_name);          
+            args.add(0, Util.jar_path() + File.separator + prog_name);          
             ProcessBuilder pb = new ProcessBuilder(args);
             daq_proc = pb.start();
             
@@ -1606,7 +1593,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
         Thread th = new Thread("Freerun thread") {
             @Override
             public void run() {     
-                    run_external_program(
+                    run_daq_program(
                             "freerun.exe",
                             transformed_points,
                             false);
@@ -1737,7 +1724,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
         Thread th = new Thread("Submit circles thread") {
             @Override
             public void run() {
-                run_external_program(
+                run_daq_program(
                         "ao_patterns_triggered.exe",
                         args, false);
             }

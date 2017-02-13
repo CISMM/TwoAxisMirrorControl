@@ -477,7 +477,7 @@ public class TIRFPanel extends DataPanel {
         Thread th = new Thread("Freerun thread") {
             @Override
             public void run() {     
-                    NI.run_daq_program(Util.plugin_path() + "freerun.exe",
+                    NI.run_daq_program(Util.jar_path() + "freerun.exe",
                             transformed_points);
             }
         };
@@ -570,7 +570,7 @@ public class TIRFPanel extends DataPanel {
         Thread th = new Thread("Submit circles thread") {
             @Override
             public void run() {
-                NI.run_daq_program(Util.plugin_path() + "ao_patterns_triggered.exe", 
+                NI.run_daq_program(Util.jar_path() + "ao_patterns_triggered.exe", 
                         args);
             }
         };

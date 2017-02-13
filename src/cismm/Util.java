@@ -20,6 +20,7 @@ import ij.process.ImageProcessor;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -48,10 +49,21 @@ public class Util {
     //protected static AtomicBoolean is_running = new AtomicBoolean(false);
     public static AtomicBoolean is_stop_requested = new AtomicBoolean(false);
     
-    public static String plugin_path() {
-        return System.getProperty("user.dir") + 
-               File.separator + "mmplugins" +
-               File.separator;
+    public static String jar_path() {
+        /*
+             * A raw string is like:
+             * file:C:\Program Files\Micro-Manager-1.4\mmplugins\DualAxisMirror.jar!/
+             */
+        String nativeDir = null;
+        try {
+            String path = DualAxisMirrorPlugin.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+            String decodedPath = URLDecoder.decode(path, "UTF-8");
+            nativeDir = decodedPath.substring(0, decodedPath.lastIndexOf(File.separator)).substring(5);
+            
+        } catch (UnsupportedEncodingException ex) {
+            Logger.getLogger(Util.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return nativeDir;
     }
     
     
@@ -119,14 +131,19 @@ public class Util {
             return new File(url.getPath());
         }
     }
+    
     public static Process run_external_program(String prog, List<String> args) {
         Process proc = null;
         try {
-            String path = MirrorControlForm.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-            String decodedPath = URLDecoder.decode(path, "UTF-8");
-            String nativeDir = decodedPath.substring(0, decodedPath.lastIndexOf(File.separator)).substring(5);
+            args.add(0, jar_path() + File.separator + prog);
             
-            args.add(0, nativeDir + File.separator + prog);  
+            try{
+                PrintWriter writer = new PrintWriter("C:\\Users\\phsiao\\Desktop\\the-file-name.txt", "UTF-8");
+                writer.println(args.toString());
+                writer.close();
+            } catch (IOException e) {
+               // do something
+            }
             ProcessBuilder pb = new ProcessBuilder(args);
             proc = pb.start();
         } catch (IOException ex) {
@@ -134,16 +151,17 @@ public class Util {
         }
         return proc;
     }
+    
     /**
      * Illuminate a spot at position x,y.
      */
     public static void set_voltage(String daq_str, double x, double y) {
-        /*
+        
         if (daq_str == null) {
-            JOptionPane.showMessageDialog(null, "Calibration is required.");
+            JOptionPane.showMessageDialog(null, "Analog input ports are required");
             return;
         }
-        */
+        
         
         if (x >= NI.min_v_x && x <= (NI.v_range_x + NI.min_v_x)
          && y >= NI.min_v_y && y <= (NI.v_range_y + NI.min_v_y))
@@ -155,8 +173,7 @@ public class Util {
       
 //            run_external_program(plugin_path() + "two_ao_update.exe",
 //                                 args, true);
-                run_external_program(plugin_path() + "two_ao_update.exe",
-                                 args);
+            run_external_program("two_ao_update.exe", args);
         }
     }
     
