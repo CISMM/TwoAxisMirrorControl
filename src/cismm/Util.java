@@ -132,11 +132,12 @@ public class Util {
         }
     }
     
-    public static Process run_external_program(String prog, List<String> args) {
-        Process proc = null;
+    // This assumes that the called program will terminate
+    public static void run_external_program(String prog, List<String> args) {
         try {
             args.add(0, jar_path() + File.separator + prog);
             
+            /*
             try{
                 PrintWriter writer = new PrintWriter("C:\\Users\\phsiao\\Desktop\\the-file-name.txt", "UTF-8");
                 writer.println(args.toString());
@@ -144,12 +145,16 @@ public class Util {
             } catch (IOException e) {
                // do something
             }
+            */
             ProcessBuilder pb = new ProcessBuilder(args);
-            proc = pb.start();
+            Process proc = pb.start();
+            proc.waitFor();
+            proc.destroy();
         } catch (IOException ex) {
             Logger.getLogger(MirrorControlForm.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Util.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return proc;
     }
     
     /**
@@ -169,11 +174,8 @@ public class Util {
             final List<String> args = new ArrayList<String>();    
             args.add(daq_str);
             args.add(Double.toString(x));
-            args.add(Double.toString(y));
-      
-//            run_external_program(plugin_path() + "two_ao_update.exe",
-//                                 args, true);
-            run_external_program("two_ao_update.exe", args);
+            args.add(Double.toString(y));      
+            run_external_program("two_ao_update.exe", args);            
         }
     }
     
@@ -187,10 +189,15 @@ public class Util {
         //JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "min:" + String.valueOf(min_max[0])
         //        + " max:" + String.valueOf(min_max[1]));
 
+        if ((int)min_max[1] < 9000) {
+            return new Point(-2, -2);
+        }
+        /*
         if ((int) min_max[1] / (int) min_max[0] < 5000) {
             return new Point(-2, -2);
         }
-
+        */
+        
         int width = proc.getWidth();
         int imax = ImageUtils.findArrayMax(proc.getPixels());
 
@@ -203,12 +210,15 @@ public class Util {
     // Find the brightest spot in an ImageProcessor. The image is first blurred
     // and then the pixel with maximum intensity is returned.
     public static Point findPeak(ImageProcessor proc) {
+        /*
         ImageProcessor blurImage = proc.duplicate(); 
         blurImage.setRoi((Roi) null);
         GaussianBlur blur = new GaussianBlur();
         blur.blurGaussian(blurImage, 5, 5, 0.01);
-        
         Point x = findMaxPixel(blurImage);
+        */
+        
+        Point x = findMaxPixel(proc);
         x.translate(1, 1);
         return x;
     }
@@ -314,8 +324,8 @@ public class Util {
         Point2D.Double camPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
 
         final int padding = 25;
-        final int cam_width = (int) core.getImageWidth() - padding * 2;
-        final int cam_height = (int) core.getImageHeight() - padding * 2;
+        final double cam_width = (double) core.getImageWidth() - padding * 2;
+        final double cam_height = (double) core.getImageHeight() - padding * 2;
         final double cam_step_x = cam_width / nGrid;
         final double cam_step_y = cam_height / nGrid;
 

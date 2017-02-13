@@ -49,10 +49,12 @@ public class NI {
     }
     
     public static void run_daq_program(String prog, List<String> args) {
+        /*
         if (!is_daq_running())
             daq_proc = Util.run_external_program(prog, args);
         else
             JOptionPane.showMessageDialog(null, "DAQ is being used.");
+        */
     }
     public static void force_stop_daq() {
        if (daq_proc != null) {
