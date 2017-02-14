@@ -179,32 +179,48 @@ public class Util {
         }
     }
     
-    public static Point findMaxPixel(ImageProcessor proc) {
+    // copied from https://valelab4.ucsf.edu/svn/micromanager2/trunk/mmstudio/src/org/micromanager/utils/ImageUtils.java
+    public static int unsignedValue(byte b) {
+        // Sign-extend, then mask
+        return ((int) b) & 0x000000ff;
+    }
 
-        // If there is no signal, return a point at (-2, -2)
-        int[] min_max = ImageUtils.getMinMax(proc.getPixels());
-        if (min_max[0] == 0) {
-            min_max[0] = 1;
-        }
-        //JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "min:" + String.valueOf(min_max[0])
-        //        + " max:" + String.valueOf(min_max[1]));
-
-        if ((int)min_max[1] < 9000) {
-            return new Point(-2, -2);
-        }
-        /*
-        if ((int) min_max[1] / (int) min_max[0] < 5000) {
-            return new Point(-2, -2);
-        }
-        */
+    public static int unsignedValue(short s) {
+        // Sign-extend, then mask
+        return ((int) s) & 0x0000ffff;
+    }
+    public static Point findMaxPixel(ImageProcessor proc) {       
+        final Object pixels = proc.getPixels();       
+        int max = Integer.MIN_VALUE;
+        int max_ind = -1;
         
-        int width = proc.getWidth();
-        int imax = ImageUtils.findArrayMax(proc.getPixels());
-
+        if (pixels instanceof byte[]) {
+            byte[] bytes = (byte[]) pixels;
+            for (int i = 0; i < bytes.length; ++i) {
+                int new_val = unsignedValue(bytes[i]);
+                if (new_val > max) {
+                    max = new_val;
+                    max_ind = i;
+                }        
+            }
+        }
+        if (pixels instanceof short[]) {
+            short[] shorts = (short[]) pixels;
+            for (int i = 0; i < shorts.length; ++i) {
+                int new_val = unsignedValue(shorts[i]);
+                if (new_val > max) {
+                    max = new_val;
+                    max_ind = i;
+                }               
+            }
+        }
         
-        int y = imax / width;
-        int x = imax % width;
-        return new Point(x, y);
+        if (max < 9000) {
+            return new Point(-2, -2);
+        } else {
+            int width = proc.getWidth();
+            return new Point(max_ind % width, max_ind / width);
+        }
     }
     
     // Find the brightest spot in an ImageProcessor. The image is first blurred
