@@ -25,6 +25,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +35,7 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+import org.json.Test;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
 /**
@@ -51,15 +53,21 @@ public class Util {
     
     public static String jar_path() {
         /*
-             * A raw string is like:
-             * file:C:\Program Files\Micro-Manager-1.4\mmplugins\DualAxisMirror.jar!/
-             */
+             * A raw string could be like:
+             * 1. file:C:\Program Files\Micro-Manager-1.4\mmplugins\DualAxisMirror.jar!/
+             * 2. /C:/Program Files/Micro-Manager-1.4/scripts/DualAxisMirror.jar
+             *
+        */
         String nativeDir = null;
         try {
-            String path = DualAxisMirrorPlugin.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-            String decodedPath = URLDecoder.decode(path, "UTF-8");
-            nativeDir = decodedPath.substring(0, decodedPath.lastIndexOf(File.separator)).substring(5);
-            
+            //String path = MirrorControlForm.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+            //String decodedPath = URLDecoder.decode(path, "UTF-8");
+            nativeDir = URLDecoder.decode(MirrorControlForm.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8");
+            if (nativeDir.contains("!")) {
+                nativeDir = nativeDir.substring(nativeDir.indexOf(":") + 1, nativeDir.lastIndexOf(File.separator));
+            } else {
+                nativeDir = nativeDir.substring(1, nativeDir.lastIndexOf('/'));
+            }
         } catch (UnsupportedEncodingException ex) {
             Logger.getLogger(Util.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -213,8 +221,7 @@ public class Util {
                     max_ind = i;
                 }               
             }
-        }
-        
+        }       
         if (max < 9000) {
             return new Point(-2, -2);
         } else {

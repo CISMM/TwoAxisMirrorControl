@@ -28,7 +28,6 @@ import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
-import javax.swing.JSpinner;
 import static javax.swing.WindowConstants.HIDE_ON_CLOSE;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
@@ -47,7 +46,10 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 
 import java.io.File;
-import java.net.URLDecoder;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 
 /*
  * To change this template, choose Tools | Templates
@@ -59,7 +61,7 @@ import java.net.URLDecoder;
  */
 public class MirrorControlForm extends javax.swing.JFrame {
 
-    static final String version_str = "1.0";
+    static final String version_str = "1.1";
     
     //TIRFPanel tirf_pan = new TIRFPanel();
     
@@ -128,7 +130,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
     protected static AtomicBoolean is_daq_running = new AtomicBoolean(false);
     
        
-    private List<String> daq_bin_list_;
+    static private List<String> daq_bin_list;
     
     //private Thread calibrate_thread = null;
     public static Process daq_proc = null;
@@ -146,8 +148,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
     
     // The order of the strings must match the order of the tabs on the GUI. 
-    List<String> mode_str_array = Arrays.asList("TIRF",
-            "FRAP");
+    List<String> mode_str_array = Arrays.asList("TIRF", "FRAP");
     
     public static void stop_daq_proc() {
        if (daq_proc != null) {
@@ -244,50 +245,81 @@ public class MirrorControlForm extends javax.swing.JFrame {
     }
     
     // ----------------------------------------------------------------------
-    public MirrorControlForm(CMMCore core, ScriptInterface app, List<String> daq_bin_list) {
-        //public MirrorControlForm(List<String> daq_bain_list) {
+    static public void create_daq_bins()
+    {   
+        daq_bin_list = Arrays.asList("two_ao_update.exe",
+                                      "daq_trigger.exe",
+                                      "freerun.exe",
+                                      "reset_daq.exe",
+                                      "ao_patterns_triggered.exe");
+        InputStream is = null;
+        OutputStream os = null;
+        
+        for(String bin_file: daq_bin_list)
+        {
+            try {
+                is = MirrorControlForm.class.getResource("/cismm/NI_daq_bin/" + bin_file).openStream();
+                os = new FileOutputStream(Util.jar_path()+ File.separator + bin_file);
+                //2048 here is just my preference
+                byte[] b = new byte[2048];
+                int length;
+                while ((length = is.read(b)) != -1) {
+                    os.write(b, 0, length);
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(DualAxisMirrorPlugin.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                if (is != null) {
+                    try {
+                        is.close();
+                    } catch (IOException ex) {
+                        Logger.getLogger(DualAxisMirrorPlugin.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                if (os != null) {
+                    try {
+                        os.close();
+                    } catch (IOException ex) {
+                        Logger.getLogger(DualAxisMirrorPlugin.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } 
+            }
+        }
+    }
+    static public void del_daq_bins() {
+        for (String file: daq_bin_list)
+        {
+            File f = new File(Util.jar_path()+ File.separator + file);
+            f.delete();
+        }     
+    }
+    public MirrorControlForm(CMMCore core, ScriptInterface app) {
         initComponents();
-        light_mode_drop.setModel(new DefaultComboBoxModel(mode_str_array.toArray()));
-        /*
-        ((JSpinner.DefaultEditor)input_volt_x_ui.getEditor()).getTextField().addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e){
-                if (e.getKeyCode() == KeyEvent.VK_ENTER){
-                    final List<String> args = new ArrayList<String>();
-                    args.add(cur_mode.daq_dev_str);
-                    args.add(Double.toString((Double)input_volt_x_ui.getValue()));
-                    args.add(Double.toString((Double)input_volt_y_ui.getValue()));
-                    
-                    run_daq_program("two_ao_update.exe", args, true);
-                }
-            }
-        });
-        
-        ((JSpinner.DefaultEditor)input_volt_y_ui.getEditor()).getTextField().addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e){
-                if (e.getKeyCode() == KeyEvent.VK_ENTER){
-                    delete_me(cur_mode.daq_dev_str,
-                            (Double)input_volt_x_ui.getValue(),
-                            (Double)input_volt_y_ui.getValue());
-                }
-            }
-        });
-        */
-        
-        this.setDefaultCloseOperation(HIDE_ON_CLOSE);
-        //tabbed_panel.add("aaa", tirf_pan);
         core_ = core;
         app_ = app;
-
-        daq_bin_list_ = daq_bin_list;
-        fill_mode_map();
-        fill_camera_list();
-        update_cur_mode_based_on_tab();
-        //tabbed_panel.setEnabledAt(1, false);    
+        this.setDefaultCloseOperation(HIDE_ON_CLOSE);
         this.setTitle("DualAxisMirror Plugin - " + version_str);
-       
+        
+        
+        light_mode_drop.setModel(new DefaultComboBoxModel(mode_str_array.toArray()));
         tirf_loops_ui.setModel(tirf_loops_model);
+        
+        /*
+        try{
+            PrintWriter writer = new PrintWriter("C:\\Users\\phsiao\\Desktop\\the-file-name.txt", "UTF-8");
+            writer.println(Util.jar_path());
+            writer.close();
+        } catch (IOException e) {
+           // do something
+        }
+        */
+        fill_mode_map();
+        fill_camera_list();      
+        create_daq_bins();
+        update_cur_mode_based_on_tab();
+        
+        //tabbed_panel.setEnabledAt(1, false); 
+        
         
         //System.out.println(ClassLoader.getSystemClassLoader().getResource(".").getPath());
         
