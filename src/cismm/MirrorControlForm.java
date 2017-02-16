@@ -219,16 +219,22 @@ public class MirrorControlForm extends javax.swing.JFrame {
     /*
      * This section has functions that are meant to be called from exteranl
      * programs.
+     * return type: double[x, y, isGoood]
      */
-    public boolean point_to(int x, int y, String mode) {
+    public double[] point_to(int x, int y, String mode) {
+        
+        ExpMode m = mode_map.get(mode);
+        if (m==null) return new double[]{0, 0, 0};
+        
+        /*
         ExpMode m = get_calibration(mode);
         if (m == null)
             return false;
-        
+        */
         //Point2D.Double transformPoint(Map<Polygon, AffineTransform> mapping, Point2D.Double pt)
         Point2D.Double volt = Util.transformPoint(m.poly_mapping, new Point2D.Double(x, y));
         Util.set_voltage(m.daq_dev_str, volt.x, volt.y);
-        return true;
+        return new double[]{volt.x, volt.y, 1};
     }
     
     public ExpMode get_calibration(String mode_str) {
