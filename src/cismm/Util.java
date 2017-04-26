@@ -201,6 +201,8 @@ public class Util {
         final Object pixels = proc.getPixels();       
         int max = Integer.MIN_VALUE;
         int max_ind = -1;
+        int pix_max = 65536;
+        double threshhold = 0.14;
         
         if (pixels instanceof byte[]) {
             byte[] bytes = (byte[]) pixels;
@@ -211,6 +213,7 @@ public class Util {
                     max_ind = i;
                 }        
             }
+            pix_max = 255;
         }
         if (pixels instanceof short[]) {
             short[] shorts = (short[]) pixels;
@@ -221,8 +224,9 @@ public class Util {
                     max_ind = i;
                 }               
             }
+            pix_max = 65535;
         }       
-        if (max < 9000) {
+        if (max < pix_max * threshhold) {
             return new Point(-2, -2);
         } else {
             int width = proc.getWidth();
@@ -295,7 +299,6 @@ public class Util {
     public static AffineTransform generateLinearMapping(CMMCore core, ScriptInterface app,
            String daq_str)
     {
-        
         double spacing = Math.min(NI.v_range_x, NI.v_range_y) / 10;  // use 10% of galvo/SLM range
         Map<Point2D.Double, Point2D.Double> p_to_v_map = new HashMap<Point2D.Double, Point2D.Double>();
 
@@ -313,8 +316,7 @@ public class Util {
         } catch (Exception e) {
             //throw new RuntimeException("Spots aren't detected as expected. Is DMD in focus and roughly centered in camera's field of view?");
             throw new RuntimeException(e.getMessage());
-        }
-        
+        }     
     }
     
     

@@ -223,7 +223,9 @@ public class MirrorControlForm extends javax.swing.JFrame {
      */
     public double[] point_to(int x, int y, String mode) {
         
+        System.out.println(mode);
         ExpMode m = mode_map.get(mode);
+        System.out.println(mode);
         if (m==null) return new double[]{0, 0, 0};
         
         /*
@@ -1756,6 +1758,8 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 } catch (RuntimeException e) {
                     ReportingUtils.showError(e);          
                 } finally {
+                    stop_calibration();
+                    calibrate_ui.setText("Calibrate Now!");
                     Util.is_stop_requested.set(false);
                 }
             }
