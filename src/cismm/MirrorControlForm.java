@@ -50,6 +50,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import javax.swing.JTextField;
 
 /*
  * To change this template, choose Tools | Templates
@@ -381,6 +382,8 @@ public class MirrorControlForm extends javax.swing.JFrame {
         remove_circle_ui = new javax.swing.JButton();
         move_circle_up_ui = new javax.swing.JButton();
         move_circle_down_ui = new javax.swing.JButton();
+        add_circle_range_gui = new javax.swing.JButton();
+        clear_circle_ui = new javax.swing.JButton();
         add_circle_ui = new javax.swing.JButton();
         input_volt_x_ui = new javax.swing.JSpinner();
         input_volt_y_ui = new javax.swing.JSpinner();
@@ -620,31 +623,53 @@ public class MirrorControlForm extends javax.swing.JFrame {
             }
         });
 
+        add_circle_range_gui.setText("Add Circles...");
+        add_circle_range_gui.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                add_circle_range_guiActionPerformed(evt);
+            }
+        });
+
+        clear_circle_ui.setText("Clear");
+        clear_circle_ui.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clear_circle_uiActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(add_circle_range_gui, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(remove_circle_ui, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(move_circle_up_ui, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(move_circle_down_ui))
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(remove_circle_ui, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(move_circle_up_ui, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(move_circle_down_ui, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(clear_circle_ui, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(6, 6, 6))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel5Layout.createSequentialGroup()
                         .addComponent(remove_circle_ui)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(move_circle_up_ui)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(move_circle_down_ui)))
-                .addGap(0, 0, Short.MAX_VALUE))
+                        .addComponent(move_circle_down_ui)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(clear_circle_ui)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(add_circle_range_gui)
+                .addGap(37, 37, 37))
         );
 
         add_circle_ui.setText("Add Circle to Loop");
@@ -686,67 +711,67 @@ public class MirrorControlForm extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(jPanel1Layout.createSequentialGroup()
-                                    .addGap(271, 271, 271)
-                                    .addComponent(camera_name_ui1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addGroup(jPanel1Layout.createSequentialGroup()
-                                    .addComponent(jLabel17)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(input_volt_x_ui, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(jLabel19)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(input_volt_y_ui, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(jLabel24)
-                                    .addGap(0, 0, Short.MAX_VALUE)))
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(save_circle_maps_ui))
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(add_circle_ui))
-                            .addGap(9, 9, 9)
-                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(submit_circles_ui))))
-                    .addComponent(input_volt_set_ui))
-                .addContainerGap(13, Short.MAX_VALUE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel17)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(input_volt_x_ui, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabel19)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(input_volt_y_ui, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabel24)
+                        .addGap(162, 162, 162)
+                        .addComponent(submit_circles_ui)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(input_volt_set_ui)
+                        .addGap(225, 225, 225)
+                        .addComponent(camera_name_ui1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(save_circle_maps_ui)
+                        .addContainerGap())
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(add_circle_ui, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(9, 9, 9)
+                        .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(13, 13, 13))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(18, 18, 18)
-                        .addComponent(submit_circles_ui)
-                        .addGap(25, 25, 25))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addContainerGap(14, Short.MAX_VALUE)
+                        .addContainerGap(15, Short.MAX_VALUE)
                         .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, 149, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(add_circle_ui)
-                        .addGap(6, 6, 6)))
+                        .addGap(9, 9, 9))
+                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(save_circle_maps_ui)
-                        .addComponent(camera_name_ui1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(21, 21, 21)
+                        .addGap(18, 18, 18)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel19)
                             .addComponent(jLabel24)
                             .addComponent(jLabel17)
                             .addComponent(input_volt_x_ui, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(input_volt_y_ui, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(input_volt_set_ui)
-                .addGap(38, 38, 38))
+                            .addComponent(input_volt_y_ui, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(submit_circles_ui)
+                        .addGap(15, 15, 15)))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(input_volt_set_ui)
+                        .addGap(38, 38, 38))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(save_circle_maps_ui)
+                            .addComponent(camera_name_ui1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(19, 19, 19))))
         );
 
         tabbed_panel.addTab("TIRF", jPanel1);
@@ -909,7 +934,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addComponent(point_shoot_button)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addGap(0, 100, Short.MAX_VALUE)
+                .addGap(0, 101, Short.MAX_VALUE)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(35, 35, 35))
         );
@@ -1033,7 +1058,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                         .addComponent(remove_property_ui)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(start_pa_ui)
-                .addContainerGap(50, Short.MAX_VALUE))
+                .addContainerGap(51, Short.MAX_VALUE))
         );
 
         tabbed_panel.addTab("PhotoActivation", jPanel6);
@@ -1156,7 +1181,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
                 .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(calibrate_ui)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 129, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 130, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(reset_daq_ui)
                     .addComponent(jLabel27)
@@ -1274,7 +1299,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private void submit_circles_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_submit_circles_uiActionPerformed
 
         if (!is_calibration_there())
-        return;
+            return;
 
         boolean daq_running = is_daq_running.get();
         boolean submit_pressed = submit_circles_ui.isSelected();
@@ -1367,16 +1392,57 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
     }//GEN-LAST:event_save_circle_maps_uiActionPerformed
 
+    private TIRFCircle create_circle_obj(HashMap<Polygon, AffineTransform> poly_mapping,
+                                         int center_x,
+                                         int center_y,
+                                         int radius_um,
+                                         int num_dots,
+                                         double frequency)
+  {
+        TIRFCircle tc = new TIRFCircle();
+        List<Double> circle_px = create_circle_dots((Integer)center_x,
+                                                    (Integer)center_y,
+                                                    num_dots,
+                                                    radius_um/cur_mode.um_per_pix);
+        if (circle_px == null)
+            return null;
+        
+        List<String> transformed_points = new ArrayList<String>();
+        
+        for (int i = 0; i < circle_px.size() - 1; i += 2) {
+            Point2D.Double p = new Point2D.Double(circle_px.get(i), circle_px.get(i + 1));
+            Point2D.Double trans_p = Util.transformPoint(poly_mapping, p);
+
+            String x = String.format("%.1f", (Double)trans_p.x);
+            String y = String.format("%.1f", (Double)trans_p.y);
+           
+            transformed_points.add(x);
+            transformed_points.add(y);        
+        }
+        tc.volts = transformed_points;
+        tc.radius_um = (Integer)radius_um;
+        tc.circle_frequency = (Double)frequency;
+        tc.center_x = (Integer)center_x;
+        tc.center_y = (Integer)center_y;
+        
+        return tc;
+        //tirf_loops_model.addElement(tc);
+    }
     
     private void add_circle_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_add_circle_uiActionPerformed
 
         TIRFCircle tc = new TIRFCircle();
 
-        List<Double> circle_px = create_circle_dots((Integer)center_input_x_ui.getValue(),
-            (Integer)center_input_y_ui.getValue());
+        int num_dots = (Integer)circle_samples_ui.getValue();
+        double radius_pix = ((Integer)circle_radius_ui.getValue()).doubleValue() /
+                            cur_mode.um_per_pix;
+        List<Double> circle_px = create_circle_dots(
+                    (Integer)center_input_x_ui.getValue(),
+                    (Integer)center_input_y_ui.getValue(),
+                    num_dots,
+                    radius_pix);
         if (circle_px == null)
-        return;
-
+            return;
         
         List<String> transformed_points = new ArrayList<String>();
         
@@ -1386,20 +1452,16 @@ public class MirrorControlForm extends javax.swing.JFrame {
 
             String x = String.format("%.1f", (Double)trans_p.x);
             String y = String.format("%.1f", (Double)trans_p.y);
-            
+           
             transformed_points.add(x);
-            transformed_points.add(y);
-
-            
+            transformed_points.add(y);        
         }
-        
-        
         tc.volts = transformed_points;
         tc.radius_um = (Integer)circle_radius_ui.getValue();
         tc.circle_frequency = (Double)circle_frequency_ui.getValue();
         tc.center_x = (Integer)center_input_x_ui.getValue();
         tc.center_y = (Integer)center_input_y_ui.getValue();
-
+        
         tirf_loops_model.addElement(tc);
     }//GEN-LAST:event_add_circle_uiActionPerformed
 
@@ -1432,7 +1494,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private void remove_circle_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_remove_circle_uiActionPerformed
         int selected = tirf_loops_ui.getSelectedIndex();
         if (selected == -1)
-        return;
+            return;
         tirf_loops_model.remove(selected);
     }//GEN-LAST:event_remove_circle_uiActionPerformed
 
@@ -1511,6 +1573,80 @@ public class MirrorControlForm extends javax.swing.JFrame {
         Util.run_external_program("two_ao_update.exe", args);
     }//GEN-LAST:event_input_volt_set_uiActionPerformed
 
+    int start_radius_default = -1;
+    int end_radius_default = -1;
+    int step_size_default = -1;
+    int samples_default = 50;
+    double frequency_default = 20;
+    
+    private void add_circle_range_guiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_add_circle_range_guiActionPerformed
+        // TODO add your handling code here:
+        if (!is_calibration_there()) {
+             return;   
+        }
+        String start_radius_text = "";
+        String end_radius_text = "";
+        String step_size_text = "";
+        String samples_text = "";
+        String frequency_text = "";
+        
+        if (start_radius_default > 0)
+            start_radius_text = Integer.toString(start_radius_default);
+        if (end_radius_default > 0)
+            end_radius_text = Integer.toString(end_radius_default);
+        if (step_size_default > 0)
+            step_size_text = Integer.toString(step_size_default);
+        if (samples_default > 0)
+            samples_text = Integer.toString(samples_default);
+        if (frequency_default > 0)
+            frequency_text = Double.toString(frequency_default);
+            
+        JTextField start_radius = new JTextField(start_radius_text);
+        JTextField end_radius = new JTextField(end_radius_text);
+        JTextField step_size = new JTextField(step_size_text);
+        JTextField samples = new JTextField(samples_text);
+        JTextField frequency = new JTextField(frequency_text);
+        
+        Object[] parameters = {
+            "Start Radius(um):", start_radius,
+            "End Radius(um):", end_radius,
+            "Radius Step(um):", step_size,
+            "# points on a circle:", samples,
+            "Circle Freq(Hz):", frequency
+        };
+
+        int option = JOptionPane.showConfirmDialog(null, parameters, "Add circles in batch", JOptionPane.OK_CANCEL_OPTION);
+        if (option == JOptionPane.OK_OPTION) {        
+            int s_r = Integer.parseInt(start_radius.getText());
+            int e_r = Integer.parseInt(end_radius.getText());
+            int step = Integer.parseInt(step_size.getText());
+            int dots = Integer.parseInt(samples.getText());
+            double freq = Double.parseDouble(frequency.getText());
+            int c_x = (Integer) center_input_x_ui.getValue();
+            int c_y = (Integer) center_input_y_ui.getValue();
+            
+            for (int i = s_r; i <= e_r; i += step) {
+                TIRFCircle c = create_circle_obj(cur_mode.poly_mapping,
+                                               c_x,
+                                               c_y,
+                                               i,
+                                               dots,
+                                               freq);
+                tirf_loops_model.addElement(c);
+            }
+            start_radius_default = s_r;
+            end_radius_default = e_r;
+            step_size_default = step;
+            samples_default = dots;
+            frequency_default = freq;
+        }
+    }//GEN-LAST:event_add_circle_range_guiActionPerformed
+
+    private void clear_circle_uiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clear_circle_uiActionPerformed
+        // TODO add your handling code here:
+        tirf_loops_model.clear();
+    }//GEN-LAST:event_clear_circle_uiActionPerformed
+
 
     
 
@@ -1567,7 +1703,11 @@ public class MirrorControlForm extends javax.swing.JFrame {
         return true;
     }
     
-    private List<Double> create_circle_dots(int center_x, int center_y) {
+    private List<Double> create_circle_dots(int center_x,
+                                            int center_y,
+                                            int num_dots,
+                                            double radius_pix)
+    {
         
         if (!is_calibration_there()) {
             return null;
@@ -1575,15 +1715,15 @@ public class MirrorControlForm extends javax.swing.JFrame {
         
         List<Double> ret = new ArrayList<Double>();
 
-        int num_dots = (Integer)circle_samples_ui.getValue();
-        double radius = ((Integer)circle_radius_ui.getValue()).doubleValue() /
-                     cur_mode.um_per_pix;
+        //int num_dots = (Integer)circle_samples_ui.getValue();
+        //double radius = ((Integer)circle_radius_ui.getValue()).doubleValue() /
+        //             cur_mode.um_per_pix;
 
         double unit_angle = (360.0 / num_dots) * (Math.PI / 180.0);
 
         for (int i = 0; i < num_dots; i++) {
-            double dot_x = Math.cos(unit_angle * i) * radius + center_x;
-            double dot_y = Math.sin(unit_angle * i) * radius + center_y;
+            double dot_x = Math.cos(unit_angle * i) * radius_pix + center_x;
+            double dot_y = Math.sin(unit_angle * i) * radius_pix + center_y;
 
             ret.add(dot_x);
             ret.add(dot_y);
@@ -1621,8 +1761,17 @@ public class MirrorControlForm extends javax.swing.JFrame {
     
     private void start_freerun() {
         is_daq_running.set(true);
-        final List<Double> combined = create_circle_dots((Integer) center_input_x_ui.getValue(),
-                (Integer) center_input_y_ui.getValue());
+        
+        int num_dots = (Integer)circle_samples_ui.getValue();
+        double radius_pix = ((Integer)circle_radius_ui.getValue()).doubleValue() /
+                     cur_mode.um_per_pix;
+        
+        final List<Double> combined = create_circle_dots(
+                (Integer) center_input_x_ui.getValue(),
+                (Integer) center_input_y_ui.getValue(),
+                num_dots,
+                radius_pix);
+                
         
         final List<String> transformed_points = new ArrayList<String>();
 
@@ -1837,6 +1986,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
 //        });
 //    }                    
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton add_circle_range_gui;
     private javax.swing.JButton add_circle_ui;
     private javax.swing.JButton add_pa_row_ui;
     private javax.swing.JButton add_property_ui;
@@ -1848,6 +1998,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
     private javax.swing.JSpinner circle_frequency_ui;
     private javax.swing.JSpinner circle_radius_ui;
     private javax.swing.JSpinner circle_samples_ui;
+    private javax.swing.JButton clear_circle_ui;
     private javax.swing.JTextField dev_name_ui;
     private javax.swing.JToggleButton freerun_ui;
     private javax.swing.JButton input_volt_set_ui;

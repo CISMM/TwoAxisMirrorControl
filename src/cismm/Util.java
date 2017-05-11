@@ -202,7 +202,7 @@ public class Util {
         int max = Integer.MIN_VALUE;
         int max_ind = -1;
         int pix_max = 65536;
-        double threshhold = 0.14;
+        double threshhold = 0.18;
         
         if (pixels instanceof byte[]) {
             byte[] bytes = (byte[]) pixels;
