@@ -47,6 +47,7 @@ import javax.swing.table.TableColumn;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -1927,6 +1928,60 @@ public class MirrorControlForm extends javax.swing.JFrame {
         // prepare arguments before calling an external program
         final List<String> args = new ArrayList<String>();
 
+        File f = null;
+        try {
+            f = File.createTempFile("tmp", ".csv");
+            //f.deleteOnExit();
+            
+            BufferedWriter bw = new BufferedWriter(new FileWriter(f));
+            for (int i = 0; i < tirf_loops_model.size(); ++i) {
+                Double dt = 
+                       1.0 / (((TIRFCircle)(tirf_loops_model.get(i))).circle_frequency
+                * ((TIRFCircle)(tirf_loops_model.get(i))).volts.size() / 2);
+                List<String> x_arr = new ArrayList<String>();
+                List<String> y_arr = new ArrayList<String>();
+                List<String> volt_arr = ((TIRFCircle)(tirf_loops_model.get(i))).volts;
+                for (int j = 0; j < volt_arr.size(); j+=2) {
+                    x_arr.add(volt_arr.get(j));
+                    y_arr.add(volt_arr.get(j+1));
+                }
+                StringBuilder x_builder = new StringBuilder();
+		StringBuilder y_builder = new StringBuilder();
+                x_builder.append(String.format("%f", dt.doubleValue()));
+                y_builder.append(String.format("%f", dt.doubleValue()));
+                for(String v : x_arr){
+                    x_builder.append(",");
+                    x_builder.append(v);
+                }
+                for(String v : y_arr){
+                    y_builder.append(",");
+                    y_builder.append(v);
+                }
+                String x_st = x_builder.toString();
+                String y_st = y_builder.toString();
+                bw.write(x_st);
+                bw.write("\n");
+                bw.write(y_st);
+                bw.write("\n");
+            }
+            bw.close();
+            
+        } catch(Exception e) {
+            // if any error occurs
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null,
+                "Cannot create a temp file. Try run Micro-Manager as admin.");
+            is_daq_running.set(false);
+            return;
+        }
+        
+        args.add(f.getAbsolutePath());
+        args.add("0");  // number of triggers. 0 makes it wait forever.
+        args.add(cur_mode.daq_dev_str);
+        args.add("/Dev1/PFI0");    
+        
+        
+        /*
         args.add(cur_mode.daq_dev_str);
         args.add("/Dev1/PFI0");
         args.add("2");
@@ -1940,6 +1995,7 @@ public class MirrorControlForm extends javax.swing.JFrame {
         for (int i=0; i < tirf_loops_model.size(); ++i) {
                     args.addAll(((TIRFCircle)(tirf_loops_model.get(i))).volts);
         }
+        */
         
         Thread th = new Thread("Submit circles thread") {
             @Override
