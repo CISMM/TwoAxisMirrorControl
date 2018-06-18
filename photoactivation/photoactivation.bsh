@@ -1,0 +1,175 @@
+// ===========================
+// User Input
+//=============================
+group_name = "Photoactivation";
+String[] preset_names =        {"Activation", "TIRF_514", "Beads", "mCherry"};  // Activation has to be 1st
+int[]    preset_exposures =    {100,           100,    53,     53};
+float[]  preset_focus_offset =  {2.5,             2.5,     0,    0};
+
+int[][] activation_frames =    {{50, 100}, {300, 350}, {600, 650}};
+int[][] activation_locations = {{266, 261}, {266, 261}, {266, 261}};
+
+total_frames = 1000;
+photoactivation_ms = 1000;          // exposure for photoactivation frames
+rest_between_frames_ms = 1000;
+
+point_current = -6;               // ETL input volt that makes laser focus on specimen
+widefield_current = 82;             // ETL input volt that makes laser collimated
+
+etl_port = "COM3";
+pa_shutter = "multiAAAOTF";
+save_dir = "f:/joe";                // location to save images
+pa_dev_x = "AnalogIO_dev2_ao0";
+pa_dev_y = "AnalogIO_dev2_ao1";
+center_screen_x = 266;   //266
+center_screen_y = 261;   //261
+center_screen_x_now = 250;
+center_screen_y_now = 260; 
+center_off_x = center_screen_x_now - center_screen_x;
+center_off_y = center_screen_y_now - center_screen_y;
+
+
+// ===========================
+// Program starts here
+//=============================
+import cismm.MirrorControlForm;
+import cismm.ETLControlForm; 
+import java.text.DecimalFormat;
+import org.micromanager.utils.ReportingUtils;
+
+etl = new ETLControlForm(mmc);
+mcf = new MirrorControlForm(mmc, gui);
+double[][] m_volts_pa = new double[activation_locations.length][3];      // {x, y, success_or_not}
+double[] m_volts_center = new double[3];                                // {x, y, success_or_not}
+
+if (preset_names.length != preset_exposures.length) {
+	ReportingUtils.showMessage("Number of exposures has to be equal to number of presets");
+	return;
+}
+
+// Get the etl currents from the activation positions
+for (int i=0; i < activation_locations.length; i++) {
+	m_volts_pa[i] = mcf.point_to(activation_locations[i][0]-center_off_x, activation_locations[i][1]-center_off_y, "FRAP");
+	if (m_volts_pa[i][0] < -10)
+		m_volts_pa[i][0] = -10;
+	if (m_volts_pa[i][1] < -10)
+		m_volts_pa[i][1] = -10;
+	if (m_volts_pa[i][0] > 10)
+		m_volts_pa[i][0] = 10;
+	if (m_volts_pa[i][1] > 10)
+		m_volts_pa[i][1] = 10;
+}
+
+m_volts_center = mcf.point_to(center_screen_x, center_screen_y, "FRAP");
+if (m_volts_center[0] < -10)
+	m_volts_center[0] = -10;
+if (m_volts_center[0] > 10)
+	m_volts_center[0] = 10;
+if (m_volts_center[1] < -10)
+	m_volts_center[1] = -10;
+if (m_volts_center[1] > 10)
+	m_volts_center[1] = 10;
+
+if (m_volts_pa[0][2] == 0 || m_volts_center[2] == 0) {
+	ReportingUtils.showMessage("Mirror calibration is required before doing photoactivation.");
+	return;
+}
+
+// clear all previous acquisitions
+gui.closeAllAcquisitions();
+gui.clearMessageWindow();
+
+start_focus = mmc.getPosition(mmc.getFocusDevice());
+for (int i=0; i<preset_names.length; i++) {
+	if (i==0) {
+		mmc.defineConfig(group_name, preset_names[i], "Core", "AutoShutter", "0");
+	} else {
+		mmc.defineConfig(group_name, preset_names[i], "Core", "AutoShutter", "1");
+		mmc.defineConfig(group_name, preset_names[i], pa_shutter, "State", "0");
+		mmc.defineConfig(group_name, preset_names[i], pa_dev_x, "Volts", new DecimalFormat("#0.000").format(m_volts_center[0]));
+		mmc.defineConfig(group_name, preset_names[i], pa_dev_y, "Volts", new DecimalFormat("#0.000").format(m_volts_center[1]));
+	}	
+	gui.openAcquisition(preset_names[i], save_dir, total_frames, 1, 1);
+	gui.setChannelName (preset_names[i], 0, preset_names[i]);
+}
+
+int cur_pa_ind = 0;
+	
+for (int i=0; i<total_frames; i++) {
+	gui.message("Acquiring frame " + (i+1) + ", stack " + preset_names[0]);
+	
+	// deal with Photoactivation channel separately	
+	etl.set_current(etl_port, point_current);
+	mmc.setExposure(preset_exposures[0]);	
+
+	photoactivation_begins_frame = activation_frames[cur_pa_ind][0];
+	photoactivation_end_frame = activation_frames[cur_pa_ind][1];
+	
+	if (i+1 >= photoactivation_begins_frame &&
+	    i+1 <= photoactivation_end_frame) {
+	   //mmc.setSutterOpen(pa_shutter, true);
+		mmc.defineConfig(group_name, preset_names[0], pa_shutter, "State", "1");
+	}
+	else {
+		//mmc.setSutterOpen(pa_shutter, false);
+		mmc.defineConfig(group_name, preset_names[0], pa_shutter, "State", "0");
+	}
+	mmc.defineConfig(group_name, preset_names[0], pa_dev_x, "Volts", new DecimalFormat("#0.000").format(m_volts_pa[cur_pa_ind][0]));
+	mmc.defineConfig(group_name, preset_names[0], pa_dev_y, "Volts", new DecimalFormat("#0.000").format(m_volts_pa[cur_pa_ind][1]));
+	
+	mmc.setConfig(group_name, preset_names[0]);
+	mmc.setProperty(mmc.getFocusDevice(), "Position", Double.toString(start_focus+ preset_focus_offset[0]));
+	mmc.waitForConfig(group_name, preset_names[0]);
+
+	//gui.message(Double.toString(m_volts_pa[cur_pa_ind][0]));
+	//gui.message(Double.toString(m_volts_pa[cur_pa_ind][1]));
+	
+	
+	
+	
+	if (i == photoactivation_end_frame && cur_pa_ind < activation_frames.length-1)
+		cur_pa_ind++;
+	
+	old_now = System.currentTimeMillis();
+	now = old_now;
+	capture_yet = 0;
+	while (now - old_now < photoactivation_ms) {
+		if (capture_yet == 0) {
+			gui.snapAndAddImage(preset_names[0], i, 0, 0, 0);
+			capture_yet = 1;
+		}
+		gui.sleep(20);
+		now = System.currentTimeMillis();
+	}
+	
+	for (int j=1; j<preset_names.length; j++) {
+		gui.message("Acquiring frame " + (i+1) + ", stack " + preset_names[j]);
+
+		etl.set_current(etl_port, widefield_current);
+		mmc.setExposure(preset_exposures[j]);
+		mmc.setConfig(group_name, preset_names[j]);
+		mmc.setProperty(mmc.getFocusDevice(), "Position", Double.toString(start_focus+ preset_focus_offset[j]));
+		mmc.waitForConfig(group_name, preset_names[j]);
+		
+		gui.snapAndAddImage(preset_names[j], i, 0, 0, 0);
+
+		// set channel contrast based on the first frame
+		if (i==0) {
+			gui.setContrastBasedOnFrame(preset_names[j], 0, 0);
+		}
+	}
+	gui.sleep(rest_between_frames_ms);
+}
+
+/*
+// clean added configs
+mmc.deleteConfig(group_name, preset_names[0], "Core", "AutoShutter");
+mmc.deleteConfig(group_name, preset_names[0], pa_shutter, "State");
+mmc.deleteConfig(group_name, preset_names[0], pa_dev_x, "Volts");
+mmc.deleteConfig(group_name, preset_names[0], pa_dev_y, "Volts");
+mmc.deleteConfig(group_name, preset_names[0], mmc.getFocusDevice(), "Position");
+*/
+// reset z to the 0 position
+mmc.setProperty(mmc.getFocusDevice(), "Position", Double.toString(start_focus));
+mmc.waitForSystem();
+gui.message("Experiment done.");
