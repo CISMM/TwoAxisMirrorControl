@@ -1,0 +1,93 @@
+// ====================================
+// This section requires user input
+// ====================================
+String preset_name = "561_99.9%";
+int[][] frap_locations = {{262, 117}, {350, 400}};
+int[] frap_times =     {4, 4};
+int[] recover_times =  {5, 5};
+int preview_time = 10;
+
+center_screen_x_now = 290;
+center_screen_y_now = 252;
+int point_current = -18;               // ETL input volt that makes laser focus on specimen
+int widefield_current = 82;             // ETL input volt that makes laser collimated
+// ===================================
+// Do not change anything below
+// ===================================
+move_to(double x_v, double y_v, int second, String etl_port, int etl_current, String pad_dev_x, String pad_dev_y, String group_name, String preset_name) {
+	etl.set_current(etl_port, etl_current);
+	mmc.defineConfig(group_name, preset_name, pa_dev_x, "Volts", new DecimalFormat("#0.000").format(x_v));
+	mmc.defineConfig(group_name, preset_name, pa_dev_y, "Volts", new DecimalFormat("#0.000").format(y_v));
+	mmc.setConfig(group_name, preset_name);
+	mmc.waitForConfig(group_name, preset_name);
+	gui.sleep(second*1000);
+}
+
+String group_name = "Photoactivation";
+
+//int[] patch_offset = {-11, 48};  // for 561 and 488 (7/12/2018)
+//int[] patch_offset = {0, 0};
+//patch_offset[0] = 7;
+//patch_offset[0] = 66;
+int[] patch_offset = {0, 0};
+int center_screen_x = 266;   //266
+int center_screen_y = 261;   //261
+center_screen_x += patch_offset[0];
+center_screen_y += patch_offset[1];
+int center_off_x = center_screen_x_now - center_screen_x;
+int center_off_y = center_screen_y_now - center_screen_y;
+
+String pa_dev_x = "AnalogIO_dev2_ao0";
+String pa_dev_y = "AnalogIO_dev2_ao1";
+
+String etl_port = "COM3";
+pa_shutter = "multiAAAOTF";
+
+import cismm.MirrorControlForm;
+import cismm.ETLControlForm; 
+import java.text.DecimalFormat;
+import org.micromanager.utils.ReportingUtils;
+
+etl = new ETLControlForm(mmc);
+mcf = new MirrorControlForm(mmc, gui);
+
+double[][] m_volts_pa = new double[frap_locations.length][3];
+double[] m_volts_center = new double[3]; 
+
+// Get the etl currents from the activation positions
+for (int i = 0; i < frap_locations.length; i++) {
+	m_volts_pa[i] = mcf.point_to(frap_locations[i][0]-center_off_x, frap_locations[i][1]-center_off_y, "FRAP");
+	if (m_volts_pa[i][0] < -10)
+		m_volts_pa[i][0] = -10;
+	if (m_volts_pa[i][1] < -10)
+		m_volts_pa[i][1] = -10;
+	if (m_volts_pa[i][0] > 10)
+		m_volts_pa[i][0] = 10;
+	if (m_volts_pa[i][1] > 10)
+		m_volts_pa[i][1] = 10;
+}
+m_volts_center = mcf.point_to(256-center_off_x, 256-center_off_y, "FRAP");
+if (m_volts_center[0] < -10)
+	m_volts_center[0] = -10;
+if (m_volts_center[0] > 10)
+	m_volts_center[0] = 10;
+if (m_volts_center[1] < -10)
+	m_volts_center[1] = -10;
+if (m_volts_center[1] > 10)
+	m_volts_center[1] = 10;
+
+if (m_volts_pa[0][2] == 0 || m_volts_center[2] == 0) {
+	ReportingUtils.showMessage("Mirror calibration is required before doing photoactivation.");
+	return;
+}
+mmc.defineConfig(group_name, preset_name, pa_shutter, "State", "1");
+mmc.defineConfig(group_name, preset_name, "Core", "AutoShutter", "1");
+
+// Preview first
+move_to(m_volts_center[0], m_volts_center[1], preview_time, etl_port, widefield_current, pa_dev_x, pa_dev_y, group_name, preset_name);
+
+for (int i = 0; i < frap_locations.length; i++) {
+	move_to(m_volts_pa[i][0], m_volts_pa[i][1], frap_times[i], etl_port, point_current, pa_dev_x, pa_dev_y, group_name, preset_name);
+	move_to(m_volts_center[0], m_volts_center[1], recover_times[i], etl_port, widefield_current, pa_dev_x, pa_dev_y, group_name, preset_name);
+}
+
